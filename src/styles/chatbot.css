@@ -1,0 +1,74 @@
+/**
+ * Chatbot Styles
+ * Additional styles for the LetsCrackDev AI Chatbot
+ */
+
+/* Smooth scrolling for chat container */
+.chatbot-container {
+  scroll-behavior: smooth;
+}
+
+/* Custom scrollbar for chat messages */
+.chatbot-container::-webkit-scrollbar {
+  width: 8px;
+}
+
+.chatbot-container::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.chatbot-container::-webkit-scrollbar-thumb {
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: 4px;
+}
+
+.chatbot-container::-webkit-scrollbar-thumb:hover {
+  background: rgba(0, 0, 0, 0.3);
+}
+
+.dark .chatbot-container::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+.dark .chatbot-container::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.3);
+}
+
+/* Animation for typing indicator */
+@keyframes bounce {
+  0%,
+  80%,
+  100% {
+    transform: scale(0);
+    opacity: 0.5;
+  }
+  40% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+.animate-bounce {
+  animation: bounce 1.4s infinite ease-in-out;
+}
+
+/* Message fade-in animation */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.chat-message {
+  animation: fadeIn 0.3s ease-out;
+}
+
+/* Auto-resize textarea */
+.chat-input textarea {
+  field-sizing: content;
+}
