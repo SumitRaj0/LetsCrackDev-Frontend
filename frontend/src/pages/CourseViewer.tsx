@@ -1,6 +1,6 @@
 import { useNavigate, useParams } from 'react-router-dom'
 import { useState, useEffect } from 'react'
-import { getCourseById, getCourseEnrollment, updateCourseProgress, type Course, type Lesson } from '@/lib/api/courses.api'
+import { getCourseById, getCourseEnrollment, updateCourseProgress, type Course } from '@/lib/api/courses.api'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner'
@@ -95,7 +95,6 @@ export default function CourseViewer() {
   const handleMarkComplete = async () => {
     if (!id || !currentLesson || !course.lessons) return
 
-    const lessonIndex = currentLessonIndex
     const lessonTitle = currentLesson.title
     const isCompleted = completedLessons.includes(lessonTitle)
 

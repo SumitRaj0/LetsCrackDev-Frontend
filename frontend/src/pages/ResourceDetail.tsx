@@ -1,6 +1,6 @@
 import { useParams, useNavigate, Link } from 'react-router-dom'
 import { useState, useEffect } from 'react'
-import { getResourceById, toggleResourceBookmark, type Resource } from '@/lib/api/resources.api'
+import { getResourceById, toggleResourceBookmark } from '@/lib/api/resources.api'
 import { mapBackendResourceToFrontend } from '@/lib/api/resourceMapper'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
