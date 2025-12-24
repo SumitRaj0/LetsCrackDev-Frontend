@@ -33,6 +33,19 @@ export function CouponInput({
       return
     }
 
+    // Validate amount
+    const numericAmount = Number(amount)
+    if (isNaN(numericAmount) || numericAmount <= 0) {
+      showError('Invalid amount. Please refresh the page and try again.')
+      return
+    }
+
+    // Validate required fields
+    if (!itemId || !purchaseType) {
+      showError('Missing required information. Please refresh the page and try again.')
+      return
+    }
+
     try {
       setIsValidating(true)
 
@@ -40,8 +53,10 @@ export function CouponInput({
         code: couponCode.trim().toUpperCase(),
         purchaseType,
         itemId,
-        amount,
+        amount: numericAmount,
       }
+
+      console.log('Validating coupon with data:', data) // Debug log
 
       const response = await validateCoupon(data)
 
@@ -56,12 +71,31 @@ export function CouponInput({
       } else {
         showError(response.data.message || 'Invalid coupon code')
       }
-    } catch (error) {
-      handleError(error, {
-        showToast: true,
-        logError: true,
-        context: { component: 'CouponInput', action: 'handleApply' },
-      })
+    } catch (error: any) {
+      console.error('Coupon validation error:', error) // Debug log
+      
+      // Check if error response contains coupon validation data (from coupon service)
+      if (error?.response?.status === 400 && error?.response?.data?.data) {
+        const validationData = error.response.data.data
+        if (validationData.message) {
+          showError(validationData.message)
+        } else {
+          showError(error.response.data.message || 'Invalid coupon code')
+        }
+      } else if (error?.response?.status === 400 && error?.response?.data?.message) {
+        // Show backend validation error message (from Zod schema validation)
+        showError(error.response.data.message || 'Invalid coupon code. Please check your input.')
+      } else if (error?.response?.data?.message) {
+        // Show backend error message
+        showError(error.response.data.message)
+      } else {
+        // Fallback to generic error handler
+        handleError(error, {
+          showToast: true,
+          logError: true,
+          context: { component: 'CouponInput', action: 'handleApply' },
+        })
+      }
     } finally {
       setIsValidating(false)
     }
