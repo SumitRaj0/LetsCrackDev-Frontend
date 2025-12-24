@@ -9,6 +9,9 @@ import { useErrorHandler } from '@/contexts/ErrorContext'
 import { getStoredUser, isAuthenticatedWithPasswordGrant } from '@/utils/authStorage'
 import { useUser } from '@/contexts/UserContext'
 import { useToast } from '@/contexts/ToastContext'
+import { useAuthModal } from '@/contexts/AuthModalContext'
+import { AuthModal } from '@/components/auth/AuthModal'
+import { CouponInput } from '@/components/checkout/CouponInput'
 
 // Declare Razorpay type
 declare global {
@@ -26,13 +29,24 @@ export default function PremiumCheckout() {
 
   const [isLoading, setIsLoading] = useState(false)
   const [isProcessing, setIsProcessing] = useState(false)
+  const [discount, setDiscount] = useState(0)
+  const [finalAmount, setFinalAmount] = useState(0)
+  const [appliedCouponCode, setAppliedCouponCode] = useState<string | undefined>()
   const { handleError } = useErrorHandler()
   const { user, isLoading: userLoading } = useUser()
   const { showError: showToastError } = useToast()
+  const { isOpen, mode, openModal, closeModal } = useAuthModal()
   const storedUser = getStoredUser()
 
   // Get price from URL param
   const price = priceParam ? parseFloat(priceParam) : 0
+
+  // Initialize finalAmount with price
+  useEffect(() => {
+    if (price > 0 && finalAmount === 0) {
+      setFinalAmount(price)
+    }
+  }, [price, finalAmount])
 
   useEffect(() => {
     // Validate required params
@@ -45,18 +59,18 @@ export default function PremiumCheckout() {
       return
     }
 
-    // Check authentication
+    // Check authentication - open modal instead of navigating
     if (!userLoading && !isAuthenticatedWithPasswordGrant()) {
-      showToastError('Please login to continue with your purchase')
-      navigate('/login?redirect=' + encodeURIComponent(`/premium/checkout?type=${type}&id=${id}&price=${price}`))
+      const redirectPath = `/premium/checkout?type=${type}&id=${id}&price=${price}`
+      openModal('login', redirectPath)
     }
-  }, [id, type, price, navigate, handleError, userLoading, user])
+  }, [id, type, price, navigate, handleError, userLoading, user, openModal])
 
   const handlePayment = async () => {
     // Check authentication before proceeding
     if (!isAuthenticatedWithPasswordGrant()) {
-      showToastError('Please login to continue with your purchase')
-      navigate('/login?redirect=' + encodeURIComponent(`/premium/checkout?type=${type}&id=${id}&price=${price}`))
+      const redirectPath = `/premium/checkout?type=${type}&id=${id}&price=${price}`
+      openModal('login', redirectPath)
       return
     }
 
@@ -86,6 +100,7 @@ export default function PremiumCheckout() {
         courseId: type === 'course' ? id : undefined,
         successUrl: `${window.location.origin}/payment/success`,
         cancelUrl: `${window.location.origin}/payment/cancel`,
+        couponCode: appliedCouponCode,
       }
 
       const response = await createCheckout(checkoutData)
@@ -180,27 +195,16 @@ export default function PremiumCheckout() {
     )
   }
 
-  // Check authentication
+  // Check authentication - show modal instead of separate page
   if (!isAuthenticatedWithPasswordGrant()) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <Card className="max-w-md w-full p-8 text-center">
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">
-            Authentication Required
-          </h1>
-          <p className="text-gray-600 dark:text-gray-400 mb-6">
-            Please login to continue with your purchase.
-          </p>
-          <Button
-            onClick={() => navigate('/login?redirect=' + encodeURIComponent(`/premium/checkout?type=${type}&id=${id}&price=${price}`))}
-            variant="primary"
-            size="lg"
-            className="w-full"
-          >
-            Go to Login
-          </Button>
-        </Card>
-      </div>
+      <>
+        <AuthModal isOpen={isOpen} onClose={closeModal} initialMode={mode} blankBackground={true} />
+        {/* Show checkout page in background (will be covered by modal) */}
+        <div style={{ opacity: 0.3, pointerEvents: 'none' }}>
+          {/* Render the checkout content but make it non-interactive */}
+        </div>
+      </>
     )
   }
 
@@ -232,6 +236,24 @@ export default function PremiumCheckout() {
                 </h2>
 
                 <div className="space-y-6">
+                      {/* Coupon Input */}
+                      <CouponInput
+                        purchaseType={type as 'course' | 'service'}
+                        itemId={id}
+                        amount={price}
+                        onCouponApplied={(discountAmount, finalPrice, couponCode) => {
+                          setDiscount(discountAmount)
+                          setFinalAmount(finalPrice)
+                          setAppliedCouponCode(couponCode)
+                        }}
+                        onCouponRemoved={() => {
+                          setDiscount(0)
+                          setFinalAmount(price)
+                          setAppliedCouponCode(undefined)
+                        }}
+                        appliedCouponCode={appliedCouponCode}
+                      />
+
                       <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
                         <p className="text-sm text-blue-800 dark:text-blue-200">
                           <strong>Secure Payment:</strong> Your payment will be processed securely
@@ -264,7 +286,7 @@ export default function PremiumCheckout() {
                             Verifying Payment...
                           </>
                         ) : (
-                          `Pay ₹${price.toFixed(0)}`
+                          `Pay ₹${finalAmount.toFixed(0)}`
                         )}
                       </Button>
 
@@ -297,11 +319,25 @@ export default function PremiumCheckout() {
                       {type === 'course' ? 'Premium Course' : 'Premium Service'}
                     </div>
                   </div>
-                  <div className="border-t pt-4">
-                    <div className="flex justify-between items-baseline">
+                  <div className="border-t pt-4 space-y-2">
+                    <div className="flex justify-between text-sm">
+                      <span className="text-gray-600 dark:text-gray-400">Subtotal</span>
+                      <span className="text-gray-900 dark:text-white">₹{price.toFixed(0)}</span>
+                    </div>
+                    {discount > 0 && appliedCouponCode && (
+                      <div className="flex justify-between text-sm">
+                        <span className="text-gray-600 dark:text-gray-400">
+                          Discount ({appliedCouponCode})
+                        </span>
+                        <span className="text-green-600 dark:text-green-400">
+                          -₹{discount.toFixed(0)}
+                        </span>
+                      </div>
+                    )}
+                    <div className="flex justify-between items-baseline pt-2 border-t">
                       <span className="font-semibold text-gray-900 dark:text-white">Total</span>
                       <span className="font-bold text-2xl text-gray-900 dark:text-white">
-                        ₹{price.toFixed(0)}
+                        ₹{finalAmount.toFixed(0)}
                       </span>
                     </div>
                     <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">

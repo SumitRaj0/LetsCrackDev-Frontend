@@ -11,6 +11,7 @@ export interface CreateCheckoutData {
   courseId?: string
   successUrl?: string
   cancelUrl?: string
+  couponCode?: string
 }
 
 export interface CheckoutResponse {
