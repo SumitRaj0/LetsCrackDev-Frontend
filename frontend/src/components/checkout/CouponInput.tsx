@@ -73,18 +73,28 @@ export function CouponInput({
       }
     } catch (error: any) {
       console.error('Coupon validation error:', error) // Debug log
+      console.error('Error response:', error?.response?.data) // Debug log - show full response
       
       // Check if error response contains coupon validation data (from coupon service)
-      if (error?.response?.status === 400 && error?.response?.data?.data) {
-        const validationData = error.response.data.data
-        if (validationData.message) {
-          showError(validationData.message)
-        } else {
-          showError(error.response.data.message || 'Invalid coupon code')
+      // When coupon is invalid, backend returns: { success: false, data: { valid: false, message: "..." }, message: "..." }
+      if (error?.response?.status === 400) {
+        const responseData = error.response.data
+        
+        // Check for coupon validation response structure
+        if (responseData?.data?.message) {
+          showError(responseData.data.message)
+        } 
+        // Check for Zod validation error structure
+        else if (responseData?.message) {
+          showError(responseData.message)
         }
-      } else if (error?.response?.status === 400 && error?.response?.data?.message) {
-        // Show backend validation error message (from Zod schema validation)
-        showError(error.response.data.message || 'Invalid coupon code. Please check your input.')
+        // Check for error field (from sendError)
+        else if (responseData?.error) {
+          showError(responseData.error)
+        }
+        else {
+          showError('Invalid coupon code. Please try again.')
+        }
       } else if (error?.response?.data?.message) {
         // Show backend error message
         showError(error.response.data.message)
