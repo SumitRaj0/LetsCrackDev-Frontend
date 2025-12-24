@@ -196,6 +196,17 @@ export default function AdminDashboard() {
               </h3>
               <p className="text-sm text-gray-600 dark:text-gray-400">Manage premium courses</p>
             </Link>
+
+            <Link
+              to="/admin/coupons"
+              className="bg-white dark:bg-gray-800 rounded-lg border p-6 hover:shadow-md transition-shadow"
+            >
+              <div className="text-3xl mb-3">🎫</div>
+              <h3 className="font-semibold text-lg text-black dark:text-white mb-2">
+                Manage Coupons
+              </h3>
+              <p className="text-sm text-gray-600 dark:text-gray-400">Create and manage discount coupons</p>
+            </Link>
           </div>
         </div>
       </div>

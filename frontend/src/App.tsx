@@ -4,10 +4,12 @@ import { Navbar } from '@/components/layout/Navbar'
 import { Footer } from '@/components/layout/Footer'
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner'
 import { ErrorBoundary } from '@/components/shared/ErrorBoundary'
+import { ScrollToTop } from '@/components/shared/ScrollToTop'
 import { useChatbot } from '@/contexts/ChatbotContext'
 import { useKeyboardShortcut } from '@/hooks/useKeyboardShortcut'
 import { ProtectedRoute } from '@/components/auth/ProtectedRoute'
 import { AdminProtectedRoute } from '@/components/auth/AdminProtectedRoute'
+import { AuthModalProvider } from '@/contexts/AuthModalContext'
 
 // Lazy load pages for code-splitting
 const Home = lazy(() => import('@/pages/Home'))
@@ -41,6 +43,7 @@ const AdminEditResource = lazy(() => import('@/pages/admin/EditResource'))
 const AdminCategories = lazy(() => import('@/pages/admin/Categories'))
 const AdminUsers = lazy(() => import('@/pages/admin/Users'))
 const AdminCourses = lazy(() => import('@/pages/admin/Courses'))
+const AdminCoupons = lazy(() => import('@/pages/admin/Coupons'))
 const About = lazy(() => import('@/pages/About'))
 const Blog = lazy(() => import('@/pages/Blog'))
 const Careers = lazy(() => import('@/pages/Careers'))
@@ -66,6 +69,7 @@ function AppContent() {
   return (
     <>
       <ErrorBoundary>
+        <ScrollToTop />
         <div className="min-h-screen flex flex-col bg-app-gradient dark:bg-gray-900 transition-colors">
           <div
             className="flex-1 flex"
@@ -112,6 +116,7 @@ function AppContent() {
                     <Route path="/admin/categories" element={<AdminProtectedRoute><AdminCategories /></AdminProtectedRoute>} />
                     <Route path="/admin/users" element={<AdminProtectedRoute><AdminUsers /></AdminProtectedRoute>} />
                     <Route path="/admin/courses" element={<AdminProtectedRoute><AdminCourses /></AdminProtectedRoute>} />
+                    <Route path="/admin/coupons" element={<AdminProtectedRoute><AdminCoupons /></AdminProtectedRoute>} />
                     <Route path="/about" element={<About />} />
                     <Route path="/blog" element={<Blog />} />
                     <Route path="/careers" element={<Careers />} />
@@ -136,7 +141,11 @@ function AppContent() {
 }
 
 function App() {
-  return <AppContent />
+  return (
+    <AuthModalProvider>
+      <AppContent />
+    </AuthModalProvider>
+  )
 }
 
 export default App
