@@ -4,6 +4,7 @@
  */
 
 import { api } from '@/lib/api/client'
+import { logger } from '@/utils/logger'
 
 const AUTH_BASE = '/auth'
 
@@ -16,7 +17,7 @@ export async function signupWithEmailPassword(
   name: string
 ): Promise<{ success: boolean; error?: string }> {
   try {
-    console.log('[Auth Service] Signing up user via backend:', { email, name })
+    logger.log('[Auth Service] Signing up user via backend:', { email, name })
 
     const response = await api.post<{ success: boolean; message?: string; error?: string }>(
       `${AUTH_BASE}/signup`,
@@ -38,7 +39,7 @@ export async function signupWithEmailPassword(
       error: response.error || response.message || 'Signup failed',
     }
   } catch (error) {
-    console.error('[Auth Service] Signup error:', error)
+    logger.error('[Auth Service] Signup error:', error)
     return {
       success: false,
       error: error instanceof Error ? error.message : 'Network error',

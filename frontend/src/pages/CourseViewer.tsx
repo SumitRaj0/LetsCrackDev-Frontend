@@ -60,7 +60,7 @@ export default function CourseViewer() {
           }
         } catch (enrollmentError) {
           // User might not be enrolled yet, that's okay
-          console.log('No enrollment found or error fetching enrollment:', enrollmentError)
+          // Silently handle - user may not be enrolled
         }
       } catch (error) {
         handleError(error, {

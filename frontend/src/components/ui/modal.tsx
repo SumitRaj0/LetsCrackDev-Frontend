@@ -7,9 +7,10 @@ interface ModalProps {
   children: ReactNode
   variant?: 'dark' | 'light'
   size?: 'sm' | 'md' | 'lg' | 'xl' | 'full'
+  blankBackground?: boolean // New prop for blank background
 }
 
-export function Modal({ isOpen, onClose, children, variant = 'dark', size = 'md' }: ModalProps) {
+export function Modal({ isOpen, onClose, children, variant = 'dark', size = 'md', blankBackground = false }: ModalProps) {
   useEffect(() => {
     if (isOpen) {
       document.body.style.overflow = 'hidden'
@@ -37,10 +38,14 @@ export function Modal({ isOpen, onClose, children, variant = 'dark', size = 'md'
       ? `relative bg-white dark:bg-gray-900 rounded-lg shadow-xl w-full ${sizeClasses[size]} mx-4 max-h-[90vh] overflow-y-auto`
       : `relative bg-gray-900 rounded-lg shadow-xl w-full ${sizeClasses[size]} mx-4 max-h-[90vh] overflow-y-auto`
 
+  const backgroundClasses = blankBackground
+    ? 'fixed inset-0 z-50 flex items-center justify-center bg-transparent'
+    : 'fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm'
+
   return createPortal(
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm"
-      onClick={onClose}
+      className={backgroundClasses}
+      onClick={blankBackground ? undefined : onClose}
     >
       <div className={modalClasses} onClick={e => e.stopPropagation()}>
         {children}

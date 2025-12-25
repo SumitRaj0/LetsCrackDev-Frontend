@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { useErrorHandler } from '@/contexts/ErrorContext'
@@ -13,6 +14,7 @@ interface LoginFormProps {
 }
 
 export function LoginForm({ onClose }: LoginFormProps) {
+  const navigate = useNavigate()
   const [formData, setFormData] = useState({
     email: '',
     password: '',
@@ -109,8 +111,10 @@ export function LoginForm({ onClose }: LoginFormProps) {
   }
 
   const handleForgotPassword = () => {
-    // Placeholder - will be implemented later
-    // Navigate to forgot password page or show modal
+    // Close modal if open
+    onClose?.()
+    // Navigate to forgot password page
+    navigate('/forgot')
   }
 
   return (
@@ -141,7 +145,7 @@ export function LoginForm({ onClose }: LoginFormProps) {
             value={formData.email}
             onChange={handleChange}
             placeholder="Enter your email"
-            className="pl-10 bg-gray-800 border-gray-700 text-white placeholder-gray-500 focus:ring-orange-500 focus:border-orange-500"
+            className="pl-10 bg-gray-800 border-gray-700 text-white placeholder-gray-400 focus:ring-indigo-500 focus:border-indigo-500"
           />
         </div>
         {errors.email && <p className="mt-1 text-sm text-red-500">{errors.email}</p>}
@@ -173,7 +177,7 @@ export function LoginForm({ onClose }: LoginFormProps) {
             value={formData.password}
             onChange={handleChange}
             placeholder="Enter Password"
-            className="pl-10 pr-10 bg-gray-800 border-gray-700 text-white placeholder-gray-500 focus:ring-orange-500 focus:border-orange-500"
+            className="pl-10 pr-10 bg-gray-800 border-gray-700 text-white placeholder-gray-400 focus:ring-indigo-500 focus:border-indigo-500"
           />
           <button
             type="button"
@@ -222,7 +226,7 @@ export function LoginForm({ onClose }: LoginFormProps) {
           <button
             type="button"
             onClick={handleForgotPassword}
-            className="text-sm text-orange-500 hover:text-orange-400"
+            className="text-sm text-indigo-400 hover:text-indigo-300 transition-colors"
           >
             Forgot Password?
           </button>
@@ -233,7 +237,7 @@ export function LoginForm({ onClose }: LoginFormProps) {
       <Button
         type="submit"
         disabled={isLoading}
-        className="w-full bg-orange-500 hover:bg-orange-600 text-white font-semibold py-3 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed"
+        className="w-full bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white font-semibold py-3 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed shadow-sm hover:shadow-md hover:shadow-indigo-500/50 transition-all duration-200"
       >
         {isLoading ? 'Logging in...' : 'Login'}
       </Button>

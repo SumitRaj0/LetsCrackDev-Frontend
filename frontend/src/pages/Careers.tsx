@@ -6,6 +6,18 @@ import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Card } from '@/components/ui/card'
 
+/**
+ * Generate Gmail compose link for job application
+ * Opens Gmail in browser instead of default email client
+ */
+const generateJobApplicationEmail = (job: JobListing): string => {
+  const recipientEmail = 'letscrackdev@gmail.com'
+  const subject = encodeURIComponent(`Job Application - ${job.title}`)
+  
+  // Gmail compose URL - opens Gmail in browser
+  return `https://mail.google.com/mail/?view=cm&to=${recipientEmail}&su=${subject}`
+}
+
 const jobListings: JobListing[] = [
   {
     id: '1',
@@ -260,7 +272,13 @@ export default function Careers() {
                     ))}
                   </ul>
                 </div>
-                <Button variant="primary" size="md">
+                <Button
+                  variant="primary"
+                  size="md"
+                  onClick={() => {
+                    window.location.href = generateJobApplicationEmail(job)
+                  }}
+                >
                   Apply Now
                 </Button>
               </Card>

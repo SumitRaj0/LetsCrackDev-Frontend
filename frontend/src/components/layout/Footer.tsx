@@ -3,6 +3,11 @@ import { SocialLinks } from '@/components/shared/SocialLinks'
 import { COMPANY_INFO } from '@/lib/constants'
 
 export function Footer() {
+  // Scroll to top when clicking footer links
+  const handleLinkClick = () => {
+    window.scrollTo({ top: 0, behavior: 'instant' })
+  }
+
   return (
     <footer className="bg-slate-950 text-slate-100 mt-auto relative">
       {/* Top gradient strip */}
@@ -34,6 +39,7 @@ export function Footer() {
               <li>
                 <Link
                   to="/"
+                  onClick={handleLinkClick}
                   className="text-slate-400 hover:text-slate-100 transition-colors text-sm"
                 >
                   Home
@@ -42,6 +48,7 @@ export function Footer() {
               <li>
                 <Link
                   to="/resources"
+                  onClick={handleLinkClick}
                   className="text-slate-400 hover:text-slate-100 transition-colors text-sm"
                 >
                   Resources
@@ -50,6 +57,7 @@ export function Footer() {
               <li>
                 <Link
                   to="/categories"
+                  onClick={handleLinkClick}
                   className="text-slate-400 hover:text-slate-100 transition-colors text-sm"
                 >
                   Categories
@@ -58,6 +66,7 @@ export function Footer() {
               <li>
                 <Link
                   to="/premium"
+                  onClick={handleLinkClick}
                   className="text-slate-400 hover:text-slate-100 transition-colors text-sm"
                 >
                   Premium
@@ -73,6 +82,7 @@ export function Footer() {
               <li>
                 <Link
                   to="/about"
+                  onClick={handleLinkClick}
                   className="text-slate-400 hover:text-slate-100 transition-colors text-sm"
                 >
                   About
@@ -81,6 +91,7 @@ export function Footer() {
               <li>
                 <Link
                   to="/blog"
+                  onClick={handleLinkClick}
                   className="text-slate-400 hover:text-slate-100 transition-colors text-sm"
                 >
                   Blog
@@ -89,6 +100,7 @@ export function Footer() {
               <li>
                 <Link
                   to="/careers"
+                  onClick={handleLinkClick}
                   className="text-slate-400 hover:text-slate-100 transition-colors text-sm"
                 >
                   Careers
@@ -97,6 +109,7 @@ export function Footer() {
               <li>
                 <Link
                   to="/contact"
+                  onClick={handleLinkClick}
                   className="text-slate-400 hover:text-slate-100 transition-colors text-sm"
                 >
                   Contact

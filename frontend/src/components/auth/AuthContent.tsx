@@ -38,8 +38,11 @@ export function AuthContent({
       {/* Close Button (only for modal) */}
       {showCloseButton && isModal && (
         <button
-          onClick={onClose}
-          className="absolute top-4 right-4 text-white hover:text-gray-300 transition-colors"
+          onClick={(e) => {
+            e.stopPropagation()
+            onClose?.()
+          }}
+          className="absolute top-4 right-4 z-10 text-white hover:text-gray-300 transition-colors p-1 rounded-full hover:bg-gray-800"
           aria-label="Close"
         >
           <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -73,7 +76,7 @@ export function AuthContent({
         >
           {mode === 'login' ? 'Sign in to your account' : 'Create your account'}
         </h2>
-        <p className={isModal ? 'text-gray-400' : 'text-gray-600 dark:text-gray-400'}>
+        <p className={isModal ? 'text-gray-300' : 'text-gray-600 dark:text-gray-300'}>
           {mode === 'login'
             ? 'Sign in to continue your journey with us'
             : 'Sign up to start your journey with us'}
@@ -96,12 +99,12 @@ export function AuthContent({
       <div className={`mt-6 text-center text-sm ${isModal ? '' : 'space-y-2'}`}>
         {mode === 'login' ? (
           <>
-            <span className={isModal ? 'text-gray-400' : 'text-gray-600 dark:text-gray-400'}>
+            <span className={isModal ? 'text-gray-300' : 'text-gray-600 dark:text-gray-300'}>
               {isModal ? "Don't have an account? " : 'Or '}
               {isModal ? (
                 <button
                   onClick={() => handleModeChange('signup')}
-                  className="text-orange-500 hover:text-orange-400 font-medium"
+                  className="text-indigo-400 hover:text-indigo-300 font-medium transition-colors"
                 >
                   Register
                 </button>
@@ -137,12 +140,12 @@ export function AuthContent({
           </>
         ) : (
           <>
-            <span className={isModal ? 'text-gray-400' : 'text-gray-600 dark:text-gray-400'}>
+            <span className={isModal ? 'text-gray-300' : 'text-gray-600 dark:text-gray-300'}>
               {isModal ? 'Already have an account? ' : 'Already have an account? '}
               {isModal ? (
                 <button
                   onClick={() => handleModeChange('login')}
-                  className="text-orange-500 hover:text-orange-400 font-medium"
+                  className="text-indigo-400 hover:text-indigo-300 font-medium transition-colors"
                 >
                   Login
                 </button>

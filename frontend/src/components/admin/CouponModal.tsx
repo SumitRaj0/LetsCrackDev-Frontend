@@ -129,16 +129,28 @@ export function CouponModal({ isOpen, onClose, coupon, onSuccess }: CouponModalP
   }
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose}>
-      <div className="bg-white dark:bg-gray-800 rounded-lg p-6 max-w-2xl w-full max-h-[90vh] overflow-y-auto">
-        <h2 className="text-2xl font-bold text-black dark:text-white mb-6">
-          {coupon ? 'Edit Coupon' : 'Create New Coupon'}
-        </h2>
-
-        <form onSubmit={handleSubmit} className="space-y-4">
-          {/* Code */}
+    <Modal isOpen={isOpen} onClose={onClose} size="xl" variant="light">
+      <div className="p-8 max-h-[90vh] overflow-y-auto">
+        <div className="flex items-center gap-4 mb-6 pb-4 border-b border-gray-200 dark:border-gray-700">
+          <div className="w-12 h-12 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-xl flex items-center justify-center">
+            <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+          </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+            <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
+              {coupon ? 'Edit Coupon' : 'Create New Coupon'}
+            </h2>
+            <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+              {coupon ? 'Update coupon details and settings' : 'Set up a new discount coupon for your customers'}
+            </p>
+          </div>
+        </div>
+
+        <form onSubmit={handleSubmit} className="space-y-6">
+          {/* Code */}
+          <div className="bg-gray-50 dark:bg-gray-900/50 rounded-lg p-4 border border-gray-200 dark:border-gray-700">
+            <label className="block text-sm font-semibold text-gray-900 dark:text-white mb-2">
               Coupon Code <span className="text-red-500">*</span>
             </label>
             <Input
@@ -149,10 +161,13 @@ export function CouponModal({ isOpen, onClose, coupon, onSuccess }: CouponModalP
               placeholder="TEST20"
               required
               disabled={!!coupon} // Can't change code when editing
-              className="uppercase"
+              className="uppercase font-mono text-lg font-bold"
             />
             {coupon && (
-              <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+              <p className="text-xs text-gray-500 dark:text-gray-400 mt-2 flex items-center gap-1">
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
                 Coupon code cannot be changed after creation
               </p>
             )}
@@ -161,14 +176,14 @@ export function CouponModal({ isOpen, onClose, coupon, onSuccess }: CouponModalP
           {/* Discount Type and Value */}
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              <label className="block text-sm font-semibold text-gray-900 dark:text-white mb-2">
                 Discount Type <span className="text-red-500">*</span>
               </label>
               <select
                 name="discountType"
                 value={formData.discountType}
                 onChange={handleChange}
-                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-black dark:text-white"
+                className="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all"
                 required
               >
                 <option value="percentage">Percentage (%)</option>
@@ -176,20 +191,26 @@ export function CouponModal({ isOpen, onClose, coupon, onSuccess }: CouponModalP
               </select>
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              <label className="block text-sm font-semibold text-gray-900 dark:text-white mb-2">
                 Discount Value <span className="text-red-500">*</span>
               </label>
-              <Input
-                type="number"
-                name="discountValue"
-                value={formData.discountValue || ''}
-                onChange={handleChange}
-                placeholder={formData.discountType === 'percentage' ? '20' : '100'}
-                min="0"
-                max={formData.discountType === 'percentage' ? '100' : undefined}
-                step={formData.discountType === 'percentage' ? '1' : '0.01'}
-                required
-              />
+              <div className="relative">
+                <Input
+                  type="number"
+                  name="discountValue"
+                  value={formData.discountValue || ''}
+                  onChange={handleChange}
+                  placeholder={formData.discountType === 'percentage' ? '20' : '100'}
+                  min="0"
+                  max={formData.discountType === 'percentage' ? '100' : undefined}
+                  step={formData.discountType === 'percentage' ? '1' : '0.01'}
+                  required
+                  className="pr-8"
+                />
+                <span className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 dark:text-gray-400 font-medium">
+                  {formData.discountType === 'percentage' ? '%' : '₹'}
+                </span>
+              </div>
             </div>
           </div>
 
@@ -337,27 +358,46 @@ export function CouponModal({ isOpen, onClose, coupon, onSuccess }: CouponModalP
           </div>
 
           {/* Active Status */}
-          <div className="flex items-center gap-2">
-            <input
-              type="checkbox"
-              name="isActive"
-              id="isActive"
-              checked={formData.isActive ?? true}
-              onChange={handleChange}
-              className="w-4 h-4"
-            />
-            <label htmlFor="isActive" className="text-sm font-medium text-gray-700 dark:text-gray-300">
-              Active (coupon can be used)
-            </label>
+          <div className="bg-gray-50 dark:bg-gray-900/50 rounded-lg p-4 border border-gray-200 dark:border-gray-700">
+            <div className="flex items-center gap-3">
+              <input
+                type="checkbox"
+                name="isActive"
+                id="isActive"
+                checked={formData.isActive ?? true}
+                onChange={handleChange}
+                className="w-5 h-5 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500 focus:ring-2"
+              />
+              <div>
+                <label htmlFor="isActive" className="text-sm font-semibold text-gray-900 dark:text-white cursor-pointer">
+                  Active Status
+                </label>
+                <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+                  When active, this coupon can be used by customers
+                </p>
+              </div>
+            </div>
           </div>
 
           {/* Actions */}
-          <div className="flex justify-end gap-3 pt-4">
-            <Button type="button" variant="outline" onClick={onClose} disabled={isLoading}>
+          <div className="flex justify-end gap-3 pt-6 border-t border-gray-200 dark:border-gray-700">
+            <Button type="button" variant="outline" onClick={onClose} disabled={isLoading} size="lg">
               Cancel
             </Button>
-            <Button type="submit" variant="primary" disabled={isLoading}>
-              {isLoading ? 'Saving...' : coupon ? 'Update Coupon' : 'Create Coupon'}
+            <Button type="submit" variant="primary" disabled={isLoading} size="lg">
+              {isLoading ? (
+                <span className="flex items-center gap-2">
+                  <svg className="animate-spin h-4 w-4" fill="none" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                  </svg>
+                  Saving...
+                </span>
+              ) : coupon ? (
+                'Update Coupon'
+              ) : (
+                'Create Coupon'
+              )}
             </Button>
           </div>
         </form>

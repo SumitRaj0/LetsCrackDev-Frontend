@@ -4,6 +4,7 @@
  */
 
 import { createContext, useContext, useState, useEffect, ReactNode, useCallback } from 'react'
+import { logger } from '@/utils/logger'
 
 interface ChatbotContextType {
   isOpen: boolean
@@ -32,7 +33,7 @@ export function ChatbotProvider({ children }: { children: ReactNode }) {
         }
       }
     } catch (error) {
-      console.error('Error reading chatbot width from localStorage:', error)
+      logger.error('Error reading chatbot width from localStorage:', error)
     }
     return DEFAULT_WIDTH
   })
@@ -42,7 +43,7 @@ export function ChatbotProvider({ children }: { children: ReactNode }) {
     try {
       localStorage.setItem('chatbot-width', width.toString())
     } catch (error) {
-      console.error('Error saving chatbot width to localStorage:', error)
+      logger.error('Error saving chatbot width to localStorage:', error)
     }
   }, [width])
 

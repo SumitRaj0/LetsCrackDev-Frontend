@@ -1,6 +1,7 @@
 import { Component, ErrorInfo, ReactNode } from 'react'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
+import { logger } from '@/utils/logger'
 
 interface Props {
   children: ReactNode
@@ -29,8 +30,11 @@ export class ErrorBoundary extends Component<Props, State> {
   }
 
   componentDidCatch(error: Error, errorInfo: ErrorInfo) {
-    // Log error to error reporting service in production
-    console.error('ErrorBoundary caught an error:', error, errorInfo)
+    // Log error - logger will handle dev/prod distinction
+    logger.error('ErrorBoundary caught an error:', error, errorInfo)
+    
+    // TODO: In production, send to error reporting service (Sentry, LogRocket, etc.)
+    // Example: errorService.captureException(error, { extra: errorInfo })
   }
 
   handleReset = () => {

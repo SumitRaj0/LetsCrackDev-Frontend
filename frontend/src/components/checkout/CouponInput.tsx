@@ -4,6 +4,7 @@ import { Input } from '@/components/ui/input'
 import { validateCoupon, type ValidateCouponData } from '@/lib/api'
 import { useToast } from '@/contexts/ToastContext'
 import { useErrorHandler } from '@/contexts/ErrorContext'
+import { logger } from '@/utils/logger'
 
 interface CouponInputProps {
   purchaseType: 'course' | 'service'
@@ -28,6 +29,11 @@ export function CouponInput({
   const { handleError } = useErrorHandler()
 
   const handleApply = async () => {
+    // Prevent double submission
+    if (isValidating) {
+      return
+    }
+
     if (!couponCode.trim()) {
       showError('Please enter a coupon code')
       return
@@ -42,6 +48,7 @@ export function CouponInput({
 
     // Validate required fields
     if (!itemId || !purchaseType) {
+      logger.error('Missing required fields:', { itemId, purchaseType, amount })
       showError('Missing required information. Please refresh the page and try again.')
       return
     }
@@ -56,9 +63,17 @@ export function CouponInput({
         amount: numericAmount,
       }
 
-      console.log('Validating coupon with data:', data) // Debug log
+      logger.log('Validating coupon with data:', data)
 
       const response = await validateCoupon(data)
+      logger.log('Coupon validation response:', response)
+
+      // Check if response structure is correct
+      if (!response || !response.data) {
+        logger.error('Invalid response structure:', response)
+        showError('Invalid response from server. Please try again.')
+        return
+      }
 
       if (response.data.valid) {
         onCouponApplied(
@@ -72,32 +87,40 @@ export function CouponInput({
         showError(response.data.message || 'Invalid coupon code')
       }
     } catch (error: any) {
-      console.error('Coupon validation error:', error) // Debug log
-      console.error('Error response:', error?.response?.data) // Debug log - show full response
+      logger.error('Coupon validation error:', error)
+      logger.error('Error response:', error?.response?.data)
+      logger.error('Error status:', error?.response?.status)
       
-      // Check if error response contains coupon validation data (from coupon service)
-      // When coupon is invalid, backend returns: { success: false, data: { valid: false, message: "..." }, message: "..." }
-      if (error?.response?.status === 400) {
+      // Handle different error scenarios
+      if (error?.response) {
+        const status = error.response.status
         const responseData = error.response.data
-        
-        // Check for coupon validation response structure
-        if (responseData?.data?.message) {
-          showError(responseData.data.message)
-        } 
-        // Check for Zod validation error structure
-        else if (responseData?.message) {
+
+        if (status === 400) {
+          // Validation error from backend
+          if (responseData?.data?.message) {
+            showError(responseData.data.message)
+          } else if (responseData?.message) {
+            showError(responseData.message)
+          } else if (responseData?.error) {
+            showError(responseData.error)
+          } else {
+            showError('Invalid coupon code. Please check the code and try again.')
+          }
+        } else if (status === 401) {
+          showError('Please log in to apply coupons.')
+        } else if (status === 429) {
+          showError('Too many requests. Please wait a moment and try again.')
+        } else if (status >= 500) {
+          showError('Server error. Please try again later.')
+        } else if (responseData?.message) {
           showError(responseData.message)
+        } else {
+          showError('Failed to validate coupon. Please try again.')
         }
-        // Check for error field (from sendError)
-        else if (responseData?.error) {
-          showError(responseData.error)
-        }
-        else {
-          showError('Invalid coupon code. Please try again.')
-        }
-      } else if (error?.response?.data?.message) {
-        // Show backend error message
-        showError(error.response.data.message)
+      } else if (error?.message) {
+        // Network error or other error
+        showError(error.message)
       } else {
         // Fallback to generic error handler
         handleError(error, {

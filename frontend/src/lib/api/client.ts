@@ -5,6 +5,8 @@
  * Note: For authenticated requests, use setAuthTokenGetter() to provide token retrieval function
  */
 
+import { logger } from '@/utils/logger'
+
 export interface ApiError {
   message: string
   status?: number
@@ -31,8 +33,14 @@ export class ApiClientError extends Error {
   }
 }
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'https://letscrackdev-backend.onrender.com/api'
+// API Base URL - must be set via environment variable in production
+const API_BASE_URL = import.meta.env.VITE_API_URL || (import.meta.env.DEV ? 'http://localhost:3001/api' : '')
 const DEFAULT_TIMEOUT = 30000 // 30 seconds
+
+// Validate API URL in production
+if (import.meta.env.PROD && !API_BASE_URL) {
+  throw new Error('VITE_API_URL environment variable is required in production')
+}
 
 // Token getter function - will be set by auth service
 let tokenGetter: (() => Promise<string | null>) | null = null
@@ -98,7 +106,7 @@ export async function apiClient<T = unknown>(
 
   const url = endpoint.startsWith('http') ? endpoint : `${API_BASE_URL}${endpoint}`
   
-  console.log('[API Client] Making request:', {
+  logger.log('[API Client] Making request:', {
     method: fetchOptions.method || 'GET',
     url,
     endpoint,
@@ -111,15 +119,15 @@ export async function apiClient<T = unknown>(
     try {
       authToken = await tokenGetter()
       if (!authToken) {
-        console.warn('[API Client] No token available for request to:', endpoint)
+        logger.warn('[API Client] No token available for request to:', endpoint)
       } else {
-        console.log('[API Client] Token retrieved, making request to:', endpoint)
+        logger.log('[API Client] Token retrieved, making request to:', endpoint)
       }
     } catch (error) {
-      console.warn('[API Client] Failed to get auth token:', error)
+      logger.warn('[API Client] Failed to get auth token:', error)
     }
   } else {
-    console.warn('[API Client] No token getter registered')
+    logger.warn('[API Client] No token getter registered')
   }
 
   // Merge headers
@@ -180,7 +188,7 @@ export async function apiClient<T = unknown>(
     const contentType = response.headers.get('content-type')
     if (contentType?.includes('application/json')) {
       const data = await response.json()
-      console.log('[API Client] Response data:', data)
+      logger.log('[API Client] Response data:', data)
 
       // Handle API response format with error field
       if (data.error) {

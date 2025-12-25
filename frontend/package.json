@@ -20,9 +20,15 @@
     "test:run": "vitest run",
     "test:coverage": "vitest run --coverage",
     "test:coverage:open": "vitest run --coverage && start coverage/index.html",
-    "test:dashboard": "vitest run src/__tests__/pages/Dashboard.test.tsx"
+    "test:dashboard": "vitest run src/__tests__/pages/Dashboard.test.tsx",
+    "test:e2e": "playwright test",
+    "test:e2e:ui": "playwright test --ui",
+    "test:e2e:headed": "playwright test --headed",
+    "test:e2e:debug": "playwright test --debug",
+    "test:e2e:report": "playwright show-report"
   },
   "dependencies": {
+    "@emailjs/browser": "^4.4.1",
     "@google/generative-ai": "^0.24.1",
     "@reduxjs/toolkit": "^2.11.0",
     "axios": "^1.13.2",
@@ -42,6 +48,7 @@
     "tailwind-merge": "^2.4.0"
   },
   "devDependencies": {
+    "@playwright/test": "^1.57.0",
     "@testing-library/jest-dom": "^6.1.5",
     "@testing-library/react": "^14.1.2",
     "@testing-library/user-event": "^14.5.1",

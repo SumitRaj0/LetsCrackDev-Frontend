@@ -3,6 +3,8 @@
  * Stores tokens in a way that works with our API client
  */
 
+import { logger } from './logger'
+
 const TOKEN_KEY = 'devhub_auth_tokens'
 const USER_KEY = 'devhub_auth_user'
 
@@ -47,7 +49,7 @@ export function storeAuthTokens(tokens: {
   localStorage.setItem(TOKEN_KEY, JSON.stringify(stored))
   } catch (error) {
     // Handle localStorage errors (quota exceeded, disabled, etc.)
-    console.error('Failed to store auth tokens:', error)
+    logger.error('Failed to store auth tokens:', error)
     // Fallback to sessionStorage if localStorage fails
     try {
       sessionStorage.setItem(TOKEN_KEY, JSON.stringify({
@@ -59,7 +61,7 @@ export function storeAuthTokens(tokens: {
           : Date.now() + 15 * 60 * 1000,
       }))
     } catch (sessionError) {
-      console.error('Failed to store auth tokens in sessionStorage:', sessionError)
+      logger.error('Failed to store auth tokens in sessionStorage:', sessionError)
       throw new Error('Unable to store authentication tokens. Please check your browser settings.')
     }
   }
@@ -138,12 +140,12 @@ export function storeAuthUser(user: StoredUser): void {
   try {
   localStorage.setItem(USER_KEY, JSON.stringify(user))
   } catch (error) {
-    console.error('Failed to store user data:', error)
+    logger.error('Failed to store user data:', error)
     // Fallback to sessionStorage
     try {
       sessionStorage.setItem(USER_KEY, JSON.stringify(user))
     } catch (sessionError) {
-      console.error('Failed to store user data in sessionStorage:', sessionError)
+      logger.error('Failed to store user data in sessionStorage:', sessionError)
       // Non-critical, continue without storing
     }
   }
@@ -188,7 +190,7 @@ export function clearAuthTokens(): void {
     sessionStorage.removeItem(TOKEN_KEY)
     sessionStorage.removeItem(USER_KEY)
   } catch (error) {
-    console.error('Failed to clear auth tokens:', error)
+    logger.error('Failed to clear auth tokens:', error)
     // Continue anyway - tokens may not exist
   }
 }

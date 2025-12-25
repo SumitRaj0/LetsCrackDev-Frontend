@@ -32,6 +32,11 @@ export interface UserResponse {
 
 export interface ForgotPasswordResponse {
   success: boolean
+  data?: {
+    resetUrl?: string
+    emailSent?: boolean
+    error?: string
+  }
   message: string
 }
 

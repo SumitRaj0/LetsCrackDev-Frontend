@@ -32,6 +32,9 @@ export function useKeyboardShortcut({
     if (!enabled) return
 
     const handleKeyDown = (e: KeyboardEvent) => {
+      // Guard against undefined key
+      if (!e.key) return
+      
       if (
         e.key.toLowerCase() === key.toLowerCase() &&
         e.ctrlKey === ctrlKey &&

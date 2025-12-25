@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { useErrorHandler } from '@/contexts/ErrorContext'
 import { useToast } from '@/contexts/ToastContext'
+import { sendContactEmail } from '@/utils/emailService'
 
 export default function Contact() {
   const [formData, setFormData] = useState({
@@ -24,14 +25,17 @@ export default function Contact() {
     try {
       setIsSubmitting(true)
 
-      // Placeholder - will be implemented later
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1000))
+      // Send email directly from frontend using EmailJS
+      await sendContactEmail(formData)
 
       showSuccess('Thank you for your message! We will get back to you soon.')
       setFormData({ name: '', email: '', subject: '', message: '' })
-    } catch (error) {
-      handleError(error, {
+    } catch (error: any) {
+      const errorMessage =
+        error?.message ||
+        'Failed to send message. Please try again later.'
+      
+      handleError(new Error(errorMessage), {
         showToast: true,
         logError: true,
         context: { component: 'Contact', action: 'handleSubmit' },

@@ -231,7 +231,7 @@ export function SignupForm({ onClose }: SignupFormProps) {
           value={formData.name}
           onChange={handleChange}
           placeholder="Full name"
-          className="bg-gray-800 border-gray-700 text-white placeholder-gray-500 focus:ring-orange-500 focus:border-orange-500"
+          className="bg-gray-800 border-gray-700 text-white placeholder-gray-400 focus:ring-indigo-500 focus:border-indigo-500"
         />
         {errors.name && <p className="mt-1 text-sm text-red-500">{errors.name}</p>}
       </div>
@@ -263,7 +263,7 @@ export function SignupForm({ onClose }: SignupFormProps) {
             value={formData.email}
             onChange={handleChange}
             placeholder="Enter your email"
-            className="pl-10 bg-gray-800 border-gray-700 text-white placeholder-gray-500 focus:ring-orange-500 focus:border-orange-500"
+            className="pl-10 bg-gray-800 border-gray-700 text-white placeholder-gray-400 focus:ring-indigo-500 focus:border-indigo-500"
           />
         </div>
         {errors.email && <p className="mt-1 text-sm text-red-500">{errors.email}</p>}
@@ -281,7 +281,7 @@ export function SignupForm({ onClose }: SignupFormProps) {
             value={formData.password}
             onChange={handleChange}
             placeholder="Enter Password"
-            className="pr-10 bg-gray-800 border-gray-700 text-white placeholder-gray-500 focus:ring-indigo-500 focus:border-indigo-500"
+            className="pr-10 bg-gray-800 border-gray-700 text-white placeholder-gray-400 focus:ring-indigo-500 focus:border-indigo-500"
           />
           <button
             type="button"
@@ -340,7 +340,7 @@ export function SignupForm({ onClose }: SignupFormProps) {
             value={formData.confirmPassword}
             onChange={handleChange}
             placeholder="Confirm Password"
-            className="pr-10 bg-gray-800 border-gray-700 text-white placeholder-gray-500 focus:ring-indigo-500 focus:border-indigo-500"
+            className="pr-10 bg-gray-800 border-gray-700 text-white placeholder-gray-400 focus:ring-indigo-500 focus:border-indigo-500"
           />
           <button
             type="button"

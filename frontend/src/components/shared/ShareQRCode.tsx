@@ -7,6 +7,7 @@ import { useState } from 'react'
 import { QRCode } from './QRCode'
 import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
+import { logger } from '@/utils/logger'
 
 interface ShareQRCodeProps {
   url: string
@@ -27,8 +28,8 @@ export function ShareQRCode({ url, title, description, className = '' }: ShareQR
           url: url,
         })
       } catch (error) {
-        // User cancelled or error occurred
-        console.error('Error sharing:', error)
+        // User cancelled or error occurred - silently handle
+        logger.error('Error sharing:', error)
       }
     } else {
       // Fallback: Copy to clipboard

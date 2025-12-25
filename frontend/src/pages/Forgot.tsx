@@ -5,6 +5,7 @@ import { Input } from '@/components/ui/input'
 import { Card } from '@/components/ui/card'
 import { forgotPassword } from '@/lib/api/auth.api'
 import { useToast } from '@/contexts/ToastContext'
+import { logger } from '@/utils/logger'
 
 export default function Forgot() {
   const [email, setEmail] = useState('')
@@ -15,6 +16,13 @@ export default function Forgot() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     
+    // Prevent double submission
+    if (isLoading) {
+      return
+    }
+    
+    // HTML5 validation handles empty email via required attribute
+    // This check is a fallback for programmatic calls
     if (!email.trim()) {
       showError('Please enter your email address')
       return
@@ -25,12 +33,33 @@ export default function Forgot() {
       const response = await forgotPassword(email)
       if (response.success) {
         setIsSubmitted(true)
-        showSuccess('If an account with that email exists, a password reset link has been sent.')
+        
+        // Check if email was sent or if we got a reset URL as fallback
+        if (response.data?.resetUrl) {
+          if (response.data?.emailSent === false) {
+            // Email failed but we have the reset URL
+            showSuccess(
+              `Password reset link generated! Email sending failed. Check the browser console for the reset link.`
+            )
+            logger.error('⚠️ Email sending failed:', response.data.error)
+            logger.log('🔗 Password Reset Link (copy this):', response.data.resetUrl)
+            // Also show in an alert for easier access
+            alert(`Password Reset Link:\n\n${response.data.resetUrl}\n\nCopy this link to reset your password.`)
+          } else {
+            // Development mode - show reset URL
+            showSuccess(
+              `Password reset link generated! Check your email or use this link from the console.`
+            )
+            logger.log('🔗 Password Reset Link:', response.data.resetUrl)
+          }
+        } else {
+          showSuccess('If an account with that email exists, a password reset link has been sent. Please check your email and spam folder.')
+        }
       }
     } catch (error: any) {
-      showError(
-        error?.response?.data?.error || error?.message || 'Failed to send reset email. Please try again.'
-      )
+      const errorMessage = error?.response?.data?.error || error?.message || 'Failed to send reset email. Please try again.'
+      showError(errorMessage)
+      logger.error('Forgot password error:', error)
     } finally {
       setIsLoading(false)
     }
