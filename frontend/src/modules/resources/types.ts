@@ -9,4 +9,5 @@ export interface Resource {
   rating: number
   tags: string[]
   savedCount: number
+  status?: 'published' | 'draft'
 }

@@ -14,6 +14,7 @@ export interface Resource {
   link: string
   thumbnail?: string
   difficulty: 'beginner' | 'intermediate' | 'advanced'
+  status?: 'published' | 'draft'
   createdBy: {
     _id: string
     name: string
@@ -41,6 +42,7 @@ export interface UpdateResourceData {
   link?: string
   thumbnail?: string
   difficulty?: 'beginner' | 'intermediate' | 'advanced'
+  status?: 'published' | 'draft'
 }
 
 export interface GetResourcesParams {
@@ -114,14 +116,32 @@ export async function getResourceById(id: string): Promise<ResourceResponse> {
  * Create resource (Admin only)
  */
 export async function createResource(data: CreateResourceData): Promise<CreateResourceResponse> {
-  return api.post<CreateResourceResponse>('/v1/resources', data)
+  console.log('[resources.api] createResource called with:', { data })
+  console.log('[resources.api] Calling api.post...')
+  try {
+    const result = await api.post<CreateResourceResponse>('/v1/resources', data)
+    console.log('[resources.api] api.post result:', result)
+    return result
+  } catch (error) {
+    console.error('[resources.api] api.post error:', error)
+    throw error
+  }
 }
 
 /**
  * Update resource (Admin only)
  */
 export async function updateResource(id: string, data: UpdateResourceData): Promise<ResourceResponse> {
-  return api.patch<ResourceResponse>(`/v1/resources/${id}`, data)
+  console.log('[resources.api] updateResource called with:', { id, data })
+  console.log('[resources.api] Calling api.patch...')
+  try {
+    const result = await api.patch<ResourceResponse>(`/v1/resources/${id}`, data)
+    console.log('[resources.api] api.patch result:', result)
+    return result
+  } catch (error) {
+    console.error('[resources.api] api.patch error:', error)
+    throw error
+  }
 }
 
 /**

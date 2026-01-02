@@ -143,17 +143,62 @@ export async function apiClient<T = unknown>(
     const timeoutId = setTimeout(() => controller.abort(), timeout)
 
     // Race between fetch and timeout
+    // Prevent caching for GET requests using fetch cache option (no custom headers to avoid CORS issues)
     const fetchPromise = fetch(url, {
       ...fetchOptions,
       headers: requestHeaders,
       signal: controller.signal,
+      cache: 'no-store', // Disable browser caching - this is sufficient without custom headers
     })
 
     const response = await Promise.race([fetchPromise, createTimeoutPromise(timeout)])
 
     clearTimeout(timeoutId)
 
-    // Handle non-OK responses
+    // Handle 304 Not Modified - force a fresh request
+    if (response.status === 304) {
+      logger.log('[API Client] Received 304 Not Modified, forcing fresh request')
+      // Make a fresh request with cache-busting query parameter
+      const separator = url.includes('?') ? '&' : '?'
+      const freshUrl = `${url}${separator}_t=${Date.now()}`
+      const freshController = new AbortController()
+      const freshTimeoutId = setTimeout(() => freshController.abort(), timeout)
+      
+      try {
+        const freshResponse = await Promise.race([
+          fetch(freshUrl, {
+            ...fetchOptions,
+            headers: requestHeaders, // Don't add Cache-Control to avoid CORS issues
+            signal: freshController.signal,
+            cache: 'no-store',
+          }),
+          createTimeoutPromise(timeout)
+        ])
+        
+        clearTimeout(freshTimeoutId)
+        
+        if (!freshResponse.ok) {
+          const error = await parseErrorResponse(freshResponse)
+          throw new ApiClientError(error.message, freshResponse.status, error.code, error.details)
+        }
+        
+        const contentType = freshResponse.headers.get('content-type')
+        if (contentType?.includes('application/json')) {
+          const data = await freshResponse.json()
+          logger.log('[API Client] Fresh response data after 304:', data)
+          if (data.error) {
+            throw new ApiClientError(data.error, freshResponse.status, data.code, data)
+          }
+          return data as T
+        }
+        return (await freshResponse.text()) as unknown as T
+      } catch (freshError) {
+        clearTimeout(freshTimeoutId)
+        throw freshError
+      }
+    }
+
+    // Handle non-OK responses (excluding 304 which we handled above)
     if (!response.ok) {
       const error = await parseErrorResponse(response)
 

@@ -82,7 +82,7 @@ export default function Blog() {
         <div className="max-w-6xl mx-auto">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
             {blogPosts.map(post => (
-              <Card key={post.id} className="overflow-hidden hover-lift">
+              <Card key={post.id} className="overflow-hidden hover-lift group">
                 <div className="p-6">
                   <div className="flex items-center gap-2 mb-3">
                     <Badge variant="default" size="md">
@@ -92,7 +92,7 @@ export default function Blog() {
                       {post.readTime}
                     </span>
                   </div>
-                  <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-3 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors">
+                  <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-3 group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors">
                     <Link to={`/blog/${post.id}`}>{post.title}</Link>
                   </h2>
                   <p className="text-gray-600 dark:text-gray-400 mb-4 line-clamp-3">

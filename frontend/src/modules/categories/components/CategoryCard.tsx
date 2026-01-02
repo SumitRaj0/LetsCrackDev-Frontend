@@ -95,16 +95,35 @@ export function CategoryCard({ category }: CategoryCardProps) {
   )
 
   return (
-    <Link to={`/resources?category=${category.slug}`} className="block h-full">
-      <div className="bg-white dark:bg-gray-800 rounded-xl p-6 border border-gray-200 dark:border-gray-700 shadow-sm hover:-translate-y-1 hover:shadow-xl hover:scale-105 transition-all duration-200 ease-out h-full relative before:absolute before:inset-0 before:rounded-xl before:pointer-events-none before:bg-gradient-to-br before:from-indigo-500/10 before:via-purple-500/10 before:to-pink-500/10 dark:before:from-indigo-400/20 dark:before:via-purple-400/20 dark:before:to-pink-400/20 before:opacity-0 hover:before:opacity-100 before:transition-opacity before:duration-300 hover:border-indigo-300 dark:hover:border-indigo-600">
+    <Link to={`/resources?category=${category.slug}`} className="block h-full group">
+      <div className="bg-white dark:bg-gray-800 rounded-xl p-6 border border-gray-200 dark:border-gray-700 shadow-sm hover:shadow-md transition-shadow duration-150 h-full">
         <div className="flex flex-col gap-4">
           <div className="text-indigo-600 dark:text-indigo-400 flex-shrink-0">{icon}</div>
           <div className="min-w-0">
-            <h3 className="font-semibold text-lg text-gray-900 dark:text-white mb-2">
+            <h3 className="font-semibold text-lg text-gray-900 dark:text-white mb-2 group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors">
               {category.name}
             </h3>
             <p className="text-sm text-gray-600 dark:text-gray-400">
-              {category.resourceCount} resources available
+              {category.resourceCount === 0 ? (
+                <span className="inline-flex items-center gap-1.5">
+                  <span>Coming Soon</span>
+                  <svg
+                    className="w-4 h-4 text-indigo-500 dark:text-indigo-400"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
+                    />
+                  </svg>
+                </span>
+              ) : (
+                `${category.resourceCount} resource${category.resourceCount !== 1 ? 's' : ''} available`
+              )}
             </p>
           </div>
         </div>

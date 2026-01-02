@@ -16,7 +16,7 @@ export function SocialLinks({ variant = 'default', className = '' }: SocialLinks
         href={SOCIAL_LINKS.github}
         target="_blank"
         rel="noopener noreferrer"
-        className={`${containerClass} bg-slate-800 hover:bg-slate-700 rounded-full flex items-center justify-center transition-all duration-200 hover:scale-110 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 focus:ring-offset-slate-950 text-white`}
+        className={`${containerClass} bg-slate-800 hover:bg-slate-700 rounded-full flex items-center justify-center transition-colors duration-150 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 focus:ring-offset-slate-950 text-white`}
         aria-label="GitHub"
       >
         <GitHubIcon className={`${iconClass} text-white`} />
@@ -25,7 +25,7 @@ export function SocialLinks({ variant = 'default', className = '' }: SocialLinks
         href={SOCIAL_LINKS.linkedin}
         target="_blank"
         rel="noopener noreferrer"
-        className={`${containerClass} bg-slate-800 hover:bg-slate-700 rounded-full flex items-center justify-center transition-all duration-200 hover:scale-110 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 focus:ring-offset-slate-950 text-white`}
+        className={`${containerClass} bg-slate-800 hover:bg-slate-700 rounded-full flex items-center justify-center transition-colors duration-150 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 focus:ring-offset-slate-950 text-white`}
         aria-label="LinkedIn"
       >
         <LinkedInIcon className={`${iconClass} text-white`} />
@@ -34,7 +34,7 @@ export function SocialLinks({ variant = 'default', className = '' }: SocialLinks
         href={SOCIAL_LINKS.twitter}
         target="_blank"
         rel="noopener noreferrer"
-        className={`${containerClass} bg-slate-800 hover:bg-slate-700 rounded-full flex items-center justify-center transition-all duration-200 hover:scale-110 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 focus:ring-offset-slate-950 text-white`}
+        className={`${containerClass} bg-slate-800 hover:bg-slate-700 rounded-full flex items-center justify-center transition-colors duration-150 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 focus:ring-offset-slate-950 text-white`}
         aria-label="Twitter"
       >
         <TwitterIcon className={`${iconClass} text-white`} />

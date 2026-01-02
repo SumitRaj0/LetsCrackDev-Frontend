@@ -168,8 +168,8 @@ export default function PremiumBenefits() {
               <div
                 key={index}
                 className="relative overflow-hidden rounded-2xl border border-indigo-200/40 dark:border-indigo-700/40 
-                           bg-white/80 dark:bg-gray-900/70 backdrop-blur-sm p-6 shadow-sm hover:shadow-xl 
-                           transition-all duration-200 group"
+                           bg-white/80 dark:bg-gray-900/70 backdrop-blur-sm p-6 shadow-sm hover:shadow-md 
+                           transition-shadow duration-150 group"
               >
                 <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none">
                   <div className="absolute -top-10 -right-10 w-32 h-32 bg-indigo-400/20 dark:bg-indigo-500/20 rounded-full blur-2xl" />
@@ -177,10 +177,10 @@ export default function PremiumBenefits() {
                 </div>
 
                 <div className="relative">
-                  <div className="mb-4 flex items-center justify-center w-14 h-14 rounded-xl bg-indigo-50/80 dark:bg-indigo-900/40 shadow-sm group-hover:scale-105 transition-transform duration-200">
+                  <div className="mb-4 flex items-center justify-center w-14 h-14 rounded-xl bg-indigo-50/80 dark:bg-indigo-900/40 shadow-sm">
                     {feature.icon}
                   </div>
-                  <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
+                  <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2 group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors">
                     {feature.title}
                   </h3>
                   <p className="text-sm text-gray-600 dark:text-gray-300 leading-relaxed">

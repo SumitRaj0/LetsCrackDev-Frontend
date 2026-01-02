@@ -1,5 +1,5 @@
 import { useParams, useNavigate, Link } from 'react-router-dom'
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { getResourceById, toggleResourceBookmark } from '@/lib/api/resources.api'
 import { mapBackendResourceToFrontend } from '@/lib/api/resourceMapper'
 import { Badge } from '@/components/ui/badge'
@@ -20,33 +20,80 @@ export default function ResourceDetail() {
   const [isLoading, setIsLoading] = useState(true)
   const [isBookmarked, setIsBookmarked] = useState(false)
   const [isTogglingBookmark, setIsTogglingBookmark] = useState(false)
+  const abortControllerRef = useRef<AbortController | null>(null)
 
-  // Fetch resource from API
+  // Fetch resource from API with request cancellation
   useEffect(() => {
+    // Cancel previous request if it exists
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort()
+    }
+
+    // Create new abort controller for this request
+    const abortController = new AbortController()
+    abortControllerRef.current = abortController
+
     const fetchResource = async () => {
       if (!id) return
 
       try {
         setIsLoading(true)
         const response = await getResourceById(id)
+        
+        // Check if request was aborted
+        if (abortController.signal.aborted) {
+          return
+        }
+
         if (response.success && response.data.resource) {
           const mappedResource = mapBackendResourceToFrontend(response.data.resource)
+          
+          // Validate URL is present and valid
+          if (!mappedResource.url || mappedResource.url.trim() === '') {
+            console.error('Resource URL is missing or empty:', {
+              resource: response.data.resource,
+              mappedResource,
+              link: response.data.resource.link
+            })
+            throw new Error('Resource URL is missing')
+          }
+          
+          // Ensure URL is properly formatted
+          const url = mappedResource.url.trim()
+          if (!url.startsWith('http://') && !url.startsWith('https://')) {
+            console.error('Resource URL is not a valid HTTP/HTTPS URL:', url)
+            throw new Error('Resource URL is invalid')
+          }
+          
           setResource(mappedResource)
         } else {
           throw new Error('Resource not found')
         }
-      } catch (error) {
+      } catch (error: any) {
+        // Ignore abort errors
+        if (error?.name === 'AbortError' || abortController.signal.aborted) {
+          return
+        }
+        
         handleError(error, {
           showToast: true,
           logError: true,
           context: { component: 'ResourceDetail', action: 'fetchResource' },
         })
       } finally {
-        setIsLoading(false)
+        // Only update loading state if request wasn't aborted
+        if (!abortController.signal.aborted) {
+          setIsLoading(false)
+        }
       }
     }
 
     fetchResource()
+
+    // Cleanup function
+    return () => {
+      abortController.abort()
+    }
   }, [id, handleError])
 
   const handleBookmark = async () => {
@@ -59,6 +106,17 @@ export default function ResourceDetail() {
 
     try {
       setIsTogglingBookmark(true)
+      
+      // Check if token exists before making request
+      const { getStoredAccessToken } = await import('@/utils/authStorage')
+      const token = getStoredAccessToken()
+      if (!token) {
+        // Token missing, redirect to login
+        showSuccess('Please log in again to bookmark resources')
+        navigate('/login?redirect=' + encodeURIComponent(window.location.pathname))
+        return
+      }
+      
       const response = await toggleResourceBookmark(id)
       if (response.success) {
         setIsBookmarked(response.data.bookmarked)
@@ -66,12 +124,18 @@ export default function ResourceDetail() {
           response.data.bookmarked ? 'Resource bookmarked!' : 'Resource unbookmarked!'
         )
       }
-    } catch (error) {
-      handleError(error, {
-        showToast: true,
-        logError: true,
-        context: { component: 'ResourceDetail', action: 'handleBookmark' },
-      })
+    } catch (error: any) {
+      // Handle authentication errors specifically
+      if (error?.status === 401 || error?.message?.includes('Authentication token missing')) {
+        showSuccess('Your session has expired. Please log in again.')
+        navigate('/login?redirect=' + encodeURIComponent(window.location.pathname))
+      } else {
+        handleError(error, {
+          showToast: true,
+          logError: true,
+          context: { component: 'ResourceDetail', action: 'handleBookmark' },
+        })
+      }
     } finally {
       setIsTogglingBookmark(false)
     }
@@ -166,40 +230,74 @@ export default function ResourceDetail() {
             <p className="text-xl text-gray-600 dark:text-gray-400 mb-8">{resource.description}</p>
 
             <div className="flex items-center gap-3 flex-wrap">
-              <a href={resource.url} target="_blank" rel="noopener noreferrer">
-                <Button variant="primary" size="lg">
+              {resource.url && resource.url.trim() !== '' ? (
+                <Button 
+                  variant="primary" 
+                  size="lg"
+                  onClick={() => {
+                    if (resource.url && resource.url.trim() !== '') {
+                      window.open(resource.url, '_blank', 'noopener,noreferrer')
+                    }
+                  }}
+                >
                   Visit Resource
                 </Button>
-              </a>
-              {user && (
+              ) : (
+                <Button variant="primary" size="lg" disabled>
+                  Visit Resource (URL not available)
+                </Button>
+              )}
+              {user ? (
                 <Button
                   variant={isBookmarked ? 'primary' : 'outline'}
                   onClick={handleBookmark}
                   size="lg"
                   disabled={isTogglingBookmark}
+                  className="flex items-center justify-center gap-2"
                 >
                   {isTogglingBookmark ? (
-                    '...'
+                    <>
+                      <svg className="w-5 h-5 animate-spin" fill="none" viewBox="0 0 24 24">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                      </svg>
+                      <span>Loading...</span>
+                    </>
                   ) : isBookmarked ? (
                     <>
-                      <svg className="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                      <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
                         <path d="M5 4a2 2 0 012-2h6a2 2 0 012 2v14l-5-2.5L5 18V4z" />
                       </svg>
-                      Bookmarked
+                      <span>Bookmarked</span>
                     </>
                   ) : (
                     <>
-                      <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
                         <path
                           strokeLinecap="round"
                           strokeLinejoin="round"
-                          strokeWidth={2}
                           d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z"
                         />
                       </svg>
-                      Bookmark
+                      <span>Bookmark</span>
                     </>
                   )}
+                </Button>
+              ) : (
+                <Button
+                  variant="outline"
+                  onClick={() => navigate('/login?redirect=' + encodeURIComponent(window.location.pathname))}
+                  size="lg"
+                  className="flex items-center justify-center gap-2"
+                >
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z"
+                    />
+                  </svg>
+                  <span>Bookmark</span>
                 </Button>
               )}
               <Button variant="outline" onClick={handleShare} size="lg">
@@ -297,9 +395,9 @@ export default function ResourceDetail() {
               </h2>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 {relatedResources.map(related => (
-                  <Link key={related.id} to={`/resources/${related.id}`} className="block">
+                  <Link key={related.id} to={`/resources/${related.id}`} className="block group">
                     <Card className="p-4 hover-lift">
-                      <h3 className="font-semibold text-gray-900 dark:text-white mb-2 line-clamp-2">
+                      <h3 className="font-semibold text-gray-900 dark:text-white mb-2 line-clamp-2 group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors">
                         {related.title}
                       </h3>
                       <div className="flex items-center gap-1 text-sm text-gray-500 dark:text-gray-400">

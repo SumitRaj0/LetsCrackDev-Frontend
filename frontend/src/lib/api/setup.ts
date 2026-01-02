@@ -11,7 +11,6 @@ import { getStoredAccessToken } from '@/utils/authStorage'
  * Sets up the token getter for authenticated requests
  */
 export function setupApiClient(): void {
-  // Set token getter function
   setAuthTokenGetter(async () => {
     return getStoredAccessToken()
   })

@@ -1,16 +1,17 @@
-import { useState, useMemo, useEffect } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { useState, useMemo, useEffect, useCallback } from 'react'
+import { Link, useNavigate, useLocation } from 'react-router-dom'
 import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
-import { deleteCourse, getCourses, type Course } from '@/lib/api/courses.api'
+import { deleteCourse, getCourses, updateCourse, type Course } from '@/lib/api/courses.api'
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner'
 import { useToast } from '@/contexts/ToastContext'
 import { useErrorHandler } from '@/contexts/ErrorContext'
 
 export default function AdminCourses() {
   const navigate = useNavigate()
+  const location = useLocation()
   const { showSuccess } = useToast()
   const { handleError } = useErrorHandler()
   const [searchQuery, setSearchQuery] = useState('')
@@ -19,30 +20,30 @@ export default function AdminCourses() {
   const [isLoading, setIsLoading] = useState(true)
 
   // Fetch courses from API
-  useEffect(() => {
-    const fetchCourses = async () => {
-      try {
-        setIsLoading(true)
-        const response = await getCourses({
-          page: 1,
-          limit: 100, // Get all for admin
-        })
-        if (response.success && response.data.courses) {
-          setCourses(response.data.courses)
-        }
-      } catch (error) {
-        handleError(error, {
-          showToast: true,
-          logError: true,
-          context: { component: 'AdminCourses', action: 'fetchCourses' },
-        })
-      } finally {
-        setIsLoading(false)
+  const fetchCourses = useCallback(async () => {
+    try {
+      setIsLoading(true)
+      const response = await getCourses({
+        page: 1,
+        limit: 100, // Get all for admin
+      })
+      if (response.success && response.data.courses) {
+        setCourses(response.data.courses)
       }
+    } catch (error) {
+      handleError(error, {
+        showToast: true,
+        logError: true,
+        context: { component: 'AdminCourses', action: 'fetchCourses' },
+      })
+    } finally {
+      setIsLoading(false)
     }
-
-    fetchCourses()
   }, [handleError])
+
+  useEffect(() => {
+    fetchCourses()
+  }, [fetchCourses, location.pathname]) // Refresh when pathname changes
 
   const filteredCourses = useMemo(() => {
     let filtered = [...courses]
@@ -54,11 +55,17 @@ export default function AdminCourses() {
       )
     }
 
-    // Note: Courses don't have a status field in the API, so statusFilter is ignored
-    // This could be implemented if status is added to the course model
+    // Filter by status
+    if (statusFilter !== 'all') {
+      filtered = filtered.filter(c => {
+        // Default to 'published' if status is undefined (backward compatibility)
+        const courseStatus = c.status || 'published'
+        return courseStatus === statusFilter
+      })
+    }
 
     return filtered
-  }, [searchQuery, statusFilter])
+  }, [searchQuery, statusFilter, courses])
 
   const handleDelete = async (id: string) => {
     if (!window.confirm('Are you sure you want to delete this course?')) return
@@ -66,8 +73,8 @@ export default function AdminCourses() {
     try {
       await deleteCourse(id)
       showSuccess('Course deleted successfully')
-      // Remove from local state
-      setCourses(courses.filter(c => c._id !== id))
+      // Refresh the list after deletion
+      await fetchCourses()
     } catch (error) {
       handleError(error, {
         showToast: true,
@@ -77,10 +84,56 @@ export default function AdminCourses() {
     }
   }
 
-  const handlePublish = async (_id: string) => {
-    // Publishing is not a separate API endpoint - courses are always "published"
-    // This could be implemented as updating a status field if needed in the future
-    showSuccess('Course is already published')
+  const handlePublish = async (id: string) => {
+    try {
+      const course = courses.find(c => c._id === id)
+      if (!course) {
+        console.error('[AdminCourses] Course not found for publish/unpublish:', id)
+        return
+      }
+
+      const currentStatus = course.status || 'published' // Default to published if undefined
+      const newStatus = currentStatus === 'published' ? 'draft' : 'published'
+      const action = newStatus === 'published' ? 'activated' : 'deactivated'
+
+      console.log('[AdminCourses] Changing course status:', {
+        id,
+        title: course.title,
+        currentStatus,
+        newStatus,
+        action
+      })
+
+      // Update course status
+      const response = await updateCourse(id, { status: newStatus })
+      
+      console.log('[AdminCourses] Update response:', response)
+      
+      if (response.success && response.data.course) {
+        console.log('[AdminCourses] Course updated successfully:', {
+          id: response.data.course._id,
+          title: response.data.course.title,
+          status: response.data.course.status
+        })
+        showSuccess(`Course ${action} successfully`)
+        // Refresh the list immediately
+        await fetchCourses()
+        // Force a small delay to ensure backend has processed the update
+        setTimeout(() => {
+          fetchCourses()
+        }, 500)
+      } else {
+        console.error('[AdminCourses] Update failed:', response)
+        throw new Error('Failed to update course status')
+      }
+    } catch (error) {
+      console.error('[AdminCourses] Error in handlePublish:', error)
+      handleError(error, {
+        showToast: true,
+        logError: true,
+        context: { component: 'AdminCourses', action: 'handlePublish' },
+      })
+    }
   }
 
   if (isLoading) {
@@ -175,8 +228,8 @@ export default function AdminCourses() {
                 className="w-full px-4 py-2 border border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:focus:ring-indigo-400 focus:border-transparent"
               >
                 <option value="all">All Status</option>
-                <option value="published">Published</option>
-                <option value="draft">Draft</option>
+                <option value="published">Active</option>
+                <option value="draft">Unactive</option>
               </select>
             </div>
           </div>
@@ -249,8 +302,11 @@ export default function AdminCourses() {
                           <span className="text-sm text-gray-700 dark:text-gray-300">-</span>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
-                          <Badge variant="success" size="sm">
-                            Published
+                          <Badge 
+                            variant={course.status === 'published' ? 'success' : 'default'} 
+                            size="sm"
+                          >
+                            {course.status === 'published' ? 'Active' : 'Unactive'}
                           </Badge>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm">
@@ -267,9 +323,13 @@ export default function AdminCourses() {
                               variant="ghost"
                               onClick={() => handlePublish(course._id)}
                               size="sm"
-                              className="text-green-600 dark:text-green-400 hover:text-green-800 dark:hover:text-green-300"
+                              className={
+                                course.status === 'published'
+                                  ? 'text-orange-600 dark:text-orange-400 hover:text-orange-800 dark:hover:text-orange-300'
+                                  : 'text-green-600 dark:text-green-400 hover:text-green-800 dark:hover:text-green-300'
+                              }
                             >
-                              Publish
+                              {course.status === 'published' ? 'Make Unactive' : 'Make Active'}
                             </Button>
                             <Button
                               variant="ghost"

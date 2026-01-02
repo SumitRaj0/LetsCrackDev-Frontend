@@ -237,7 +237,7 @@ export function LoginForm({ onClose }: LoginFormProps) {
       <Button
         type="submit"
         disabled={isLoading}
-        className="w-full bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white font-semibold py-3 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed shadow-sm hover:shadow-md hover:shadow-indigo-500/50 transition-all duration-200"
+        className="w-full bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white font-semibold py-3 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed shadow-sm hover:shadow-md hover:shadow-indigo-500/50 transition-colors duration-150"
       >
         {isLoading ? 'Logging in...' : 'Login'}
       </Button>

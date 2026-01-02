@@ -4,59 +4,61 @@ import { categories } from '@/modules/categories/data/categories'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Card } from '@/components/ui/card'
-import { createResource, updateResource, getResourceById } from '@/lib/api/resources.api'
+import { createCourse, updateCourse, getCourseById } from '@/lib/api/courses.api'
 import { useErrorHandler } from '@/contexts/ErrorContext'
 import { useToast } from '@/contexts/ToastContext'
 
-export default function AdminEditResource() {
+export default function AdminEditCourse() {
   const { id } = useParams<{ id?: string }>()
   const navigate = useNavigate()
   const location = useLocation()
-  // Check if this is a new resource: either no id param (route /admin/resources/new) or id is 'new'
-  const isNew = !id || id === 'new' || location.pathname === '/admin/resources/new'
+  // Check if this is a new course: either no id param (route /admin/courses/new) or id is 'new'
+  const isNew = !id || id === 'new' || location.pathname === '/admin/courses/new'
   const { handleError } = useErrorHandler()
   const { showSuccess } = useToast()
 
   const [formData, setFormData] = useState({
     title: '',
     description: '',
-    url: '',
+    thumbnail: '',
+    price: '',
     categorySlug: '',
-    tags: '',
     difficulty: 'beginner' as 'beginner' | 'intermediate' | 'advanced',
+    isPremium: false,
   })
 
   const [isLoading, setIsLoading] = useState(false)
   const [isFetching, setIsFetching] = useState(false)
 
-  // Fetch existing resource for editing
+  // Fetch existing course for editing
   useEffect(() => {
-    const fetchResource = async () => {
+    const fetchCourse = async () => {
       if (!isNew && id) {
         try {
           setIsFetching(true)
-          const response = await getResourceById(id)
-          if (response.success && response.data.resource) {
-            const resource = response.data.resource
+          const response = await getCourseById(id)
+          if (response.success && response.data.course) {
+            const course = response.data.course
             // Find category by matching the category name
             const category = categories.find(cat => 
-              cat.name.toLowerCase() === resource.category.toLowerCase()
+              cat.name.toLowerCase() === course.category.toLowerCase()
             )
             
             setFormData({
-              title: resource.title,
-              description: resource.description,
-              url: resource.link,
+              title: course.title,
+              description: course.description,
+              thumbnail: course.thumbnail || '',
+              price: course.price.toString(),
               categorySlug: category?.slug || '',
-              tags: resource.tags.join(', '),
-              difficulty: resource.difficulty || 'beginner',
+              difficulty: course.difficulty || 'beginner',
+              isPremium: course.isPremium || false,
             })
           }
         } catch (error) {
           handleError(error, {
             showToast: true,
             logError: true,
-            context: { component: 'EditResource', action: 'fetchResource' },
+            context: { component: 'EditCourse', action: 'fetchCourse' },
           })
         } finally {
           setIsFetching(false)
@@ -64,19 +66,25 @@ export default function AdminEditResource() {
       }
     }
 
-    fetchResource()
+    fetchCourse()
   }, [id, isNew, handleError])
 
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
   ) => {
-    const { name, value } = e.target
-    setFormData(prev => ({ ...prev, [name]: value }))
+    const { name, value, type } = e.target
+    const checked = (e.target as HTMLInputElement).checked
+    
+    if (type === 'checkbox') {
+      setFormData(prev => ({ ...prev, [name]: checked }))
+    } else {
+      setFormData(prev => ({ ...prev, [name]: value }))
+    }
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    console.log('[EditResource] Form submitted', { isNew, formData })
+    console.log('[EditCourse] Form submitted', { isNew, formData })
     setIsLoading(true)
 
     try {
@@ -87,8 +95,8 @@ export default function AdminEditResource() {
       if (!formData.description.trim()) {
         throw new Error('Description is required')
       }
-      if (!formData.url.trim()) {
-        throw new Error('URL is required')
+      if (!formData.price.trim() || isNaN(Number(formData.price)) || Number(formData.price) < 0) {
+        throw new Error('Valid price is required')
       }
       if (!formData.categorySlug) {
         throw new Error('Please select a category')
@@ -100,107 +108,62 @@ export default function AdminEditResource() {
         throw new Error('Please select a valid category')
       }
 
-      // Convert tags from comma-separated string to array
-      const tagsArray = formData.tags
-        ? formData.tags.split(',').map(tag => tag.trim()).filter(tag => tag.length > 0)
-        : []
-
       // Prepare data for API
-      const resourceData = {
+      const courseData = {
         title: formData.title.trim(),
         description: formData.description.trim(),
-        link: formData.url.trim(),
         category: selectedCategory.name, // Use category name, not slug
-        tags: tagsArray,
+        price: Number(formData.price),
         difficulty: formData.difficulty,
+        isPremium: formData.isPremium,
+        lessons: [], // Can be added later
+        ...(formData.thumbnail.trim() && { thumbnail: formData.thumbnail.trim() }),
       }
 
-      console.log('[EditResource] Prepared resource data:', resourceData)
-      console.log('[EditResource] Checking conditions - isNew:', isNew, 'id:', id, 'id type:', typeof id)
+      console.log('[EditCourse] Prepared course data:', courseData)
 
       // Determine if this is a create or update operation
       const isCreateOperation = isNew || !id || id === 'new'
       
       if (isCreateOperation) {
-        // Create new resource
-        console.log('[EditResource] Creating new resource...')
-        console.log('[EditResource] API endpoint will be: POST /v1/resources')
-        console.log('[EditResource] Request payload:', JSON.stringify(resourceData, null, 2))
+        // Create new course
+        console.log('[EditCourse] Creating new course...')
+        const response = await createCourse(courseData)
         
-        try {
-          console.log('[EditResource] About to call createResource API...')
-          const response = await createResource(resourceData)
-          console.log('[EditResource] Create response received:', response)
-          console.log('[EditResource] Response success:', response?.success)
-          console.log('[EditResource] Response data:', response?.data)
-          
-          if (response && response.success) {
-            console.log('[EditResource] Resource created successfully!')
-            showSuccess('Resource created successfully!')
-            // Navigate immediately - the resources page will refresh
-            navigate('/admin/resources')
-          } else {
-            const errorMsg = response?.message || 'Failed to create resource'
-            console.error('[EditResource] Create failed:', errorMsg)
-            throw new Error(errorMsg)
-          }
-        } catch (apiError) {
-          console.error('[EditResource] API call failed:', apiError)
-          throw apiError
+        if (response && response.success) {
+          console.log('[EditCourse] Course created successfully!')
+          showSuccess('Course created successfully!')
+          navigate('/admin/courses')
+        } else {
+          const errorMsg = response?.message || 'Failed to create course'
+          throw new Error(errorMsg)
         }
       } else {
-        // Update existing resource - only if we have a valid ID and it's not 'new'
+        // Update existing course
         if (!id || id === 'new') {
-          console.error('[EditResource] Invalid ID for update - id:', id)
-          throw new Error('Resource ID is required for update')
+          throw new Error('Course ID is required for update')
         }
         
-        console.log('[EditResource] Updating resource with id:', id)
-        console.log('[EditResource] API endpoint will be: PATCH /v1/resources/' + id)
-        console.log('[EditResource] Request payload:', JSON.stringify(resourceData, null, 2))
+        console.log('[EditCourse] Updating course with id:', id)
+        const response = await updateCourse(id, courseData)
         
-        try {
-          console.log('[EditResource] About to call updateResource API with id:', id)
-          console.log('[EditResource] updateResource function:', typeof updateResource)
-          console.log('[EditResource] Calling updateResource now...')
-          
-          // Direct API call test
-          const responsePromise = updateResource(id, resourceData)
-          console.log('[EditResource] API call promise created:', responsePromise)
-          
-          const response = await responsePromise
-          console.log('[EditResource] Update response received:', response)
-          console.log('[EditResource] Response success:', response?.success)
-          console.log('[EditResource] Response data:', response?.data)
-          
-          if (response && response.success) {
-            console.log('[EditResource] Resource updated successfully!')
-            showSuccess('Resource updated successfully!')
-            // Small delay before navigation to ensure success message is shown
-            setTimeout(() => {
-              navigate('/admin/resources')
-            }, 500)
-          } else {
-            const errorMsg = response?.message || 'Failed to update resource'
-            console.error('[EditResource] Update failed:', errorMsg)
-            throw new Error(errorMsg)
-          }
-        } catch (apiError) {
-          console.error('[EditResource] API call failed:', apiError)
-          console.error('[EditResource] Error details:', {
-            message: apiError instanceof Error ? apiError.message : String(apiError),
-            stack: apiError instanceof Error ? apiError.stack : undefined,
-            error: apiError
-          })
-          throw apiError
+        if (response && response.success) {
+          console.log('[EditCourse] Course updated successfully!')
+          showSuccess('Course updated successfully!')
+          setTimeout(() => {
+            navigate('/admin/courses')
+          }, 500)
+        } else {
+          const errorMsg = response?.message || 'Failed to update course'
+          throw new Error(errorMsg)
         }
       }
     } catch (error) {
-      console.error('[EditResource] Error in handleSubmit:', error)
+      console.error('[EditCourse] Error in handleSubmit:', error)
       handleError(error, {
         showToast: true,
         logError: true,
-        context: { component: 'EditResource', action: 'handleSubmit' },
+        context: { component: 'EditCourse', action: 'handleSubmit' },
       })
     } finally {
       setIsLoading(false)
@@ -215,10 +178,10 @@ export default function AdminEditResource() {
           <div className="flex items-center justify-between">
             <div>
               <h1 className="text-4xl font-bold text-black dark:text-white mb-2">
-                {isNew ? 'Add New Resource' : 'Edit Resource'}
+                {isNew ? 'Add New Course' : 'Edit Course'}
               </h1>
               <p className="text-gray-600 dark:text-gray-400">
-                {isNew ? 'Create a new resource for the platform' : 'Update resource details'}
+                {isNew ? 'Create a new course for the platform' : 'Update course details'}
               </p>
             </div>
             <Button variant="ghost" onClick={() => navigate('/admin')} size="sm">
@@ -234,7 +197,7 @@ export default function AdminEditResource() {
           <Card className="p-8">
             {isFetching ? (
               <div className="text-center py-8">
-                <p className="text-gray-600 dark:text-gray-400">Loading resource...</p>
+                <p className="text-gray-600 dark:text-gray-400">Loading course...</p>
               </div>
             ) : (
               <form onSubmit={handleSubmit} className="space-y-6">
@@ -248,7 +211,7 @@ export default function AdminEditResource() {
                   value={formData.title}
                   onChange={handleChange}
                   required
-                  placeholder="Enter resource title"
+                  placeholder="Enter course title"
                   rounded="default"
                 />
               </div>
@@ -264,21 +227,37 @@ export default function AdminEditResource() {
                   required
                   rows={4}
                   className="w-full px-4 py-3 border border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:focus:ring-indigo-400 focus:border-transparent resize-y"
-                  placeholder="Enter resource description"
+                  placeholder="Enter course description"
                 />
               </div>
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  URL *
+                  Thumbnail URL
                 </label>
                 <Input
                   type="url"
-                  name="url"
-                  value={formData.url}
+                  name="thumbnail"
+                  value={formData.thumbnail}
+                  onChange={handleChange}
+                  placeholder="https://example.com/thumbnail.jpg"
+                  rounded="default"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  Price (₹) *
+                </label>
+                <Input
+                  type="number"
+                  name="price"
+                  value={formData.price}
                   onChange={handleChange}
                   required
-                  placeholder="https://example.com"
+                  min="0"
+                  step="0.01"
+                  placeholder="0"
                   rounded="default"
                 />
               </div>
@@ -305,23 +284,6 @@ export default function AdminEditResource() {
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  Tags
-                </label>
-                <Input
-                  type="text"
-                  name="tags"
-                  value={formData.tags}
-                  onChange={handleChange}
-                  placeholder="React, Free, Beginner (comma-separated)"
-                  rounded="default"
-                />
-                <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
-                  Separate tags with commas
-                </p>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                   Difficulty *
                 </label>
                 <select
@@ -337,21 +299,32 @@ export default function AdminEditResource() {
                 </select>
               </div>
 
+              <div className="flex items-center">
+                <input
+                  type="checkbox"
+                  name="isPremium"
+                  id="isPremium"
+                  checked={formData.isPremium}
+                  onChange={handleChange}
+                  className="w-4 h-4 text-indigo-600 bg-gray-100 border-gray-300 rounded focus:ring-indigo-500 dark:focus:ring-indigo-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600"
+                />
+                <label htmlFor="isPremium" className="ml-2 text-sm font-medium text-gray-700 dark:text-gray-300">
+                  Premium Course
+                </label>
+              </div>
+
               <div className="flex items-center gap-4 pt-4">
                 <Button 
                   type="submit" 
                   disabled={isLoading || isFetching} 
                   variant="primary" 
                   size="lg"
-                  onClick={() => {
-                    // Let the form handle submission
-                  }}
                 >
-                  {isLoading ? 'Saving...' : isNew ? 'Create Resource' : 'Save Changes'}
+                  {isLoading ? 'Saving...' : isNew ? 'Create Course' : 'Save Changes'}
                 </Button>
                 <Button
                   type="button"
-                  onClick={() => navigate('/admin/resources')}
+                  onClick={() => navigate('/admin/courses')}
                   variant="outline"
                   size="lg"
                   disabled={isLoading}
@@ -367,3 +340,5 @@ export default function AdminEditResource() {
     </div>
   )
 }
+
+

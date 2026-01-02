@@ -26,6 +26,7 @@ const PremiumCourseDetail = lazy(() => import('@/pages/PremiumCourseDetail'))
 const PremiumServiceDetail = lazy(() => import('@/pages/PremiumServiceDetail'))
 const PaymentSuccess = lazy(() => import('@/pages/PaymentSuccess'))
 const PaymentFailed = lazy(() => import('@/pages/PaymentFailed'))
+const InterviewKitViewer = lazy(() => import('@/pages/InterviewKitViewer'))
 const Login = lazy(() => import('@/pages/Login'))
 const Signup = lazy(() => import('@/pages/Signup'))
 const SignupSuccess = lazy(() => import('@/pages/SignupSuccess'))
@@ -36,6 +37,7 @@ const Dashboard = lazy(() => import('@/pages/Dashboard'))
 const Saved = lazy(() => import('@/pages/Saved'))
 const DashboardCourses = lazy(() => import('@/pages/DashboardCourses'))
 const Profile = lazy(() => import('@/pages/Profile'))
+const PurchasedDocuments = lazy(() => import('@/pages/PurchasedDocuments'))
 const UserProfile = lazy(() => import('@/pages/UserProfile'))
 const AdminDashboard = lazy(() => import('@/pages/admin/Dashboard'))
 const AdminResources = lazy(() => import('@/pages/admin/Resources'))
@@ -43,6 +45,7 @@ const AdminEditResource = lazy(() => import('@/pages/admin/EditResource'))
 const AdminCategories = lazy(() => import('@/pages/admin/Categories'))
 const AdminUsers = lazy(() => import('@/pages/admin/Users'))
 const AdminCourses = lazy(() => import('@/pages/admin/Courses'))
+const AdminEditCourse = lazy(() => import('@/pages/admin/EditCourse'))
 const AdminCoupons = lazy(() => import('@/pages/admin/Coupons'))
 const About = lazy(() => import('@/pages/About'))
 const Blog = lazy(() => import('@/pages/Blog'))
@@ -95,9 +98,10 @@ function AppContent() {
                     <Route path="/premium/checkout" element={<ProtectedRoute><PremiumCheckout /></ProtectedRoute>} />
                     <Route path="/premium/course/:id" element={<PremiumCourseDetail />} />
                     <Route path="/premium/service/:id" element={<PremiumServiceDetail />} />
-                    <Route path="/payment/success" element={<PaymentSuccess />} />
+                    <Route path="/payment/success" element={<ProtectedRoute><PaymentSuccess /></ProtectedRoute>} />
                     <Route path="/payment/cancel" element={<PaymentFailed />} />
                     <Route path="/payment/failed" element={<PaymentFailed />} />
+                    <Route path="/interview-kit/:serviceId" element={<ProtectedRoute><InterviewKitViewer /></ProtectedRoute>} />
                     <Route path="/login" element={<Login />} />
                     <Route path="/login/success" element={<LoginSuccess />} />
                     <Route path="/signup" element={<Signup />} />
@@ -107,6 +111,7 @@ function AppContent() {
                     <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
                     <Route path="/dashboard/saved" element={<ProtectedRoute><Saved /></ProtectedRoute>} />
                     <Route path="/dashboard/courses" element={<ProtectedRoute><DashboardCourses /></ProtectedRoute>} />
+                    <Route path="/dashboard/documents" element={<ProtectedRoute><PurchasedDocuments /></ProtectedRoute>} />
                     <Route path="/dashboard/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
                     <Route path="/profile" element={<ProtectedRoute><UserProfile /></ProtectedRoute>} />
                     <Route path="/admin" element={<AdminProtectedRoute><AdminDashboard /></AdminProtectedRoute>} />
@@ -116,6 +121,8 @@ function AppContent() {
                     <Route path="/admin/categories" element={<AdminProtectedRoute><AdminCategories /></AdminProtectedRoute>} />
                     <Route path="/admin/users" element={<AdminProtectedRoute><AdminUsers /></AdminProtectedRoute>} />
                     <Route path="/admin/courses" element={<AdminProtectedRoute><AdminCourses /></AdminProtectedRoute>} />
+                    <Route path="/admin/courses/new" element={<AdminProtectedRoute><AdminEditCourse /></AdminProtectedRoute>} />
+                    <Route path="/admin/courses/:id/edit" element={<AdminProtectedRoute><AdminEditCourse /></AdminProtectedRoute>} />
                     <Route path="/admin/coupons" element={<AdminProtectedRoute><AdminCoupons /></AdminProtectedRoute>} />
                     <Route path="/about" element={<About />} />
                     <Route path="/blog" element={<Blog />} />

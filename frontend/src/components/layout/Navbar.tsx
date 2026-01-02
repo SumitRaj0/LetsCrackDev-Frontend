@@ -152,7 +152,7 @@ export function Navbar() {
             {isLoggedIn && (
               <button
                 onClick={openChatbot}
-                className="flex items-center gap-2 bg-gradient-to-r from-indigo-600 to-purple-600 text-white px-4 py-2.5 rounded-xl hover:from-indigo-700 hover:to-purple-700 transition-all duration-200 transform hover:scale-[1.02] focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 font-semibold text-sm shadow-md hover:shadow-lg"
+                className="flex items-center gap-2 bg-gradient-to-r from-indigo-600 to-purple-600 text-white px-4 py-2.5 rounded-xl hover:from-indigo-700 hover:to-purple-700 transition-colors duration-150 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 font-semibold text-sm shadow-md hover:shadow-md"
                 title="AI Assistant"
               >
                 {/* Google-style sparkle AI icon (similar to Gemini) */}
@@ -171,7 +171,7 @@ export function Navbar() {
               <div className="relative">
                 <button
                   onClick={() => setIsProfileDropdownOpen(!isProfileDropdownOpen)}
-                  className="flex items-center gap-3 px-3 py-2 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-800 transition-all duration-200 border border-transparent hover:border-gray-200 dark:hover:border-gray-700"
+                  className="flex items-center gap-3 px-3 py-2 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors duration-150 border border-transparent hover:border-gray-200 dark:hover:border-gray-700"
                 >
                   <div className="w-9 h-9 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white text-sm font-bold shadow-sm ring-2 ring-white dark:ring-gray-900">
                     {user?.name?.charAt(0).toUpperCase() || 'U'}
@@ -418,7 +418,7 @@ export function Navbar() {
                       openChatbot()
                       setIsMobileMenuOpen(false)
                     }}
-                    className="w-full bg-gradient-to-r from-indigo-600 to-purple-600 text-white px-4 py-3 rounded-xl hover:from-indigo-700 hover:to-purple-700 transition-all font-semibold flex items-center justify-center gap-2 shadow-md"
+                    className="w-full bg-gradient-to-r from-indigo-600 to-purple-600 text-white px-4 py-3 rounded-xl hover:from-indigo-700 hover:to-purple-700 transition-colors duration-150 font-semibold flex items-center justify-center gap-2 shadow-md"
                     title="AI Assistant"
                   >
                     {/* Google-style sparkle AI icon (similar to Gemini) */}

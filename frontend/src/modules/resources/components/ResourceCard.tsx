@@ -1,4 +1,4 @@
-import { Link, useNavigate } from 'react-router-dom'
+import { useNavigate } from 'react-router-dom'
 import { useState } from 'react'
 import { Resource } from '../types'
 import { toggleResourceBookmark } from '@/lib/api/resources.api'
@@ -123,9 +123,59 @@ export function ResourceCard({ resource, isBookmarked: initialBookmarked, onBook
     }
   }
 
+  const handleCardClick = (e: React.MouseEvent) => {
+    // Don't navigate if clicking on bookmark button or any interactive element
+    const target = e.target as HTMLElement
+    
+    // Check if click is on a button, link, or interactive element
+    if (
+      target.closest('button') || 
+      target.tagName === 'BUTTON' ||
+      target.closest('a') ||
+      target.tagName === 'A'
+    ) {
+      return
+    }
+    
+    // Ensure resource has a valid ID
+    if (!resource?.id) {
+      console.error('Resource missing ID:', resource)
+      return
+    }
+    
+    // Prevent default and stop propagation to avoid conflicts
+    e.preventDefault()
+    e.stopPropagation()
+    
+    // Navigate programmatically to ensure clean URL
+    try {
+      navigate(`/resources/${resource.id}`, { replace: false })
+    } catch (error) {
+      console.error('Navigation error:', error)
+    }
+  }
+
+  // Don't render if resource is missing required data
+  if (!resource?.id) {
+    console.warn('ResourceCard: Resource missing ID', resource)
+    return null
+  }
+
   return (
-    <Link to={`/resources/${resource.id}`} className="group block h-full">
-      <div className="h-full border border-gray-200 dark:border-gray-700 rounded-xl p-6 bg-white dark:bg-gray-800 shadow-sm hover:-translate-y-1 hover:shadow-xl hover:scale-105 transition-all duration-200 ease-out relative before:absolute before:inset-0 before:rounded-xl before:pointer-events-none before:bg-gradient-to-br before:from-indigo-500/10 before:via-purple-500/10 before:to-pink-500/10 dark:before:from-indigo-400/20 dark:before:via-purple-400/20 dark:before:to-pink-400/20 before:opacity-0 hover:before:opacity-100 before:transition-opacity before:duration-300 hover:border-indigo-300 dark:hover:border-indigo-600">
+    <div 
+      onClick={handleCardClick}
+      className="group block h-full cursor-pointer"
+      role="button"
+      tabIndex={0}
+      onKeyDown={(e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault()
+          handleCardClick(e as any)
+        }
+      }}
+      aria-label={`View details for ${resource.title}`}
+    >
+      <div className="h-full border border-gray-200 dark:border-gray-700 rounded-xl p-6 bg-white dark:bg-gray-800 shadow-sm hover:shadow-md transition-shadow duration-150">
         {/* Category Badge and Rating */}
         <div className="flex items-center justify-between mb-4 relative z-10">
           <div className="flex items-center gap-1.5 px-3 py-1.5 bg-indigo-50 dark:bg-indigo-900/30 rounded-full text-xs font-medium text-indigo-700 dark:text-indigo-300">
@@ -139,6 +189,7 @@ export function ResourceCard({ resource, isBookmarked: initialBookmarked, onBook
                 disabled={isToggling}
                 className="p-1.5 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors z-20 relative"
                 title={isBookmarked ? 'Unbookmark' : 'Bookmark'}
+                type="button"
               >
                 {isToggling ? (
                   <svg className="w-4 h-4 animate-spin text-gray-400" fill="none" viewBox="0 0 24 24">
@@ -217,6 +268,6 @@ export function ResourceCard({ resource, isBookmarked: initialBookmarked, onBook
           </div>
         </div>
       </div>
-    </Link>
+    </div>
   )
 }

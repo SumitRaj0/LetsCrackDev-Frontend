@@ -23,6 +23,7 @@ export interface Course {
   price: number
   difficulty: 'beginner' | 'intermediate' | 'advanced'
   category: string
+  status: 'published' | 'draft'
   createdBy: {
     _id: string
     name: string
@@ -41,6 +42,7 @@ export interface CreateCourseData {
   price: number
   difficulty?: 'beginner' | 'intermediate' | 'advanced'
   category: string
+  status?: 'published' | 'draft'
   isPremium?: boolean
 }
 
@@ -52,6 +54,7 @@ export interface UpdateCourseData {
   price?: number
   difficulty?: 'beginner' | 'intermediate' | 'advanced'
   category?: string
+  status?: 'published' | 'draft'
   isPremium?: boolean
 }
 
@@ -134,9 +137,12 @@ export async function createCourse(data: CreateCourseData): Promise<CreateCourse
 }
 
 /**
- * Update course (Admin only)
+ * Update course (Admin only) - supports both PATCH and PUT
  */
-export async function updateCourse(id: string, data: UpdateCourseData): Promise<CourseResponse> {
+export async function updateCourse(id: string, data: UpdateCourseData, usePut = false): Promise<CourseResponse> {
+  if (usePut) {
+    return api.put<CourseResponse>(`/v1/courses/${id}`, data)
+  }
   return api.patch<CourseResponse>(`/v1/courses/${id}`, data)
 }
 

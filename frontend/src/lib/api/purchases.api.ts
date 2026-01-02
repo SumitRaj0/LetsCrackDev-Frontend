@@ -64,6 +64,13 @@ export interface Purchase {
   status: 'pending' | 'completed' | 'failed' | 'refunded'
   razorpayOrderId?: string
   razorpayPaymentId?: string
+  metadata?: {
+    googleDriveLink?: string
+    googleDriveFileId?: string
+    accessGrantedAt?: string
+    accessExpiresAt?: string
+    fileType?: string
+  }
   completedAt?: string
   createdAt: string
   updatedAt: string
@@ -138,4 +145,26 @@ export async function getPurchaseById(id: string): Promise<PurchaseResponse> {
   return api.get<PurchaseResponse>(`/v1/purchases/${id}`)
 }
 
+/**
+ * Get access link for a purchase
+ */
+export interface PurchaseAccessResponse {
+  success: boolean
+  data: {
+    access: {
+      hasAccess: boolean
+      accessLink?: string
+      fileType?: string
+      accessGrantedAt?: string
+      accessExpiresAt?: string
+      serviceName?: string
+      courseTitle?: string
+    }
+  }
+  message: string
+}
+
+export async function getPurchaseAccess(id: string): Promise<PurchaseAccessResponse> {
+  return api.get<PurchaseAccessResponse>(`/v1/purchases/${id}/access`)
+}
 

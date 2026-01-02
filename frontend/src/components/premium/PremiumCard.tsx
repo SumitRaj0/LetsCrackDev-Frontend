@@ -51,7 +51,7 @@ export function PremiumCard({ item, type }: PremiumCardProps) {
   }
 
   return (
-    <Card className="p-6 hover-lift h-full flex flex-col">
+    <Card className="p-6 hover-lift h-full flex flex-col group">
       <div className="flex-1">
         <div className="flex items-center justify-between mb-3">
           {course && <Badge className={getLevelColor(course.level)}>{course.level}</Badge>}
@@ -85,7 +85,7 @@ export function PremiumCard({ item, type }: PremiumCardProps) {
           </div>
         </div>
 
-        <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">{item.title}</h3>
+        <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-2 group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors">{item.title}</h3>
 
         <p className="text-gray-600 dark:text-gray-400 text-sm mb-4 line-clamp-3">
           {item.description}

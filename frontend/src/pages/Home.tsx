@@ -1,4 +1,5 @@
 import { Link, useNavigate } from 'react-router-dom'
+import { useState, useEffect } from 'react'
 import { SearchBar } from '@/components/shared/SearchBar'
 import { CategoryCard } from '@/modules/categories/components/CategoryCard'
 import { categories } from '@/modules/categories/data/categories'
@@ -8,11 +9,42 @@ import { ReviewCard } from '@/components/shared/ReviewCard'
 import { reviews } from '@/data/reviews'
 import { ArrowRightIcon } from '@/components/ui/icons/ArrowRightIcon'
 import { FadeInOnScroll } from '@/components/shared/FadeInOnScroll'
+import { getResources } from '@/lib/api/resources.api'
+import { Category } from '@/modules/categories/types'
 
 const POPULAR_SEARCHES = ['React', 'Tailwind', 'System Design', 'Next.js'] as const
 
 export default function Home() {
   const navigate = useNavigate()
+  const [categoriesWithCounts, setCategoriesWithCounts] = useState<Category[]>(categories)
+
+  // Fetch resource counts for each category
+  useEffect(() => {
+    const fetchResourceCounts = async () => {
+      try {
+        const counts = await Promise.all(
+          categories.map(async (category) => {
+            try {
+              const response = await getResources({ category: category.slug, limit: 1 })
+              return {
+                ...category,
+                resourceCount: response.data.pagination.total,
+              }
+            } catch (error) {
+              // If API fails, keep the original count
+              return category
+            }
+          })
+        )
+        setCategoriesWithCounts(counts)
+      } catch (error) {
+        // If all fails, keep original categories
+        console.error('Failed to fetch resource counts:', error)
+      }
+    }
+
+    fetchResourceCounts()
+  }, [])
 
   const handleSearch = (query: string) => {
     if (query.trim()) {
@@ -66,7 +98,7 @@ export default function Home() {
                 <Link
                   key={search}
                   to={`/resources?search=${search}`}
-                  className="px-3 py-1.5 bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm rounded-full text-sm font-medium text-gray-700 dark:text-gray-300 hover:text-indigo-600 dark:hover:text-indigo-400 hover:bg-white dark:hover:bg-gray-800 transition-all duration-200 hover:scale-105 shadow-sm"
+                  className="px-3 py-1.5 bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm rounded-full text-sm font-medium text-gray-700 dark:text-gray-300 hover:text-indigo-600 dark:hover:text-indigo-400 hover:bg-white dark:hover:bg-gray-800 transition-colors duration-150 shadow-sm"
                 >
                   {search}
                 </Link>
@@ -99,7 +131,7 @@ export default function Home() {
         </FadeInOnScroll>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-          {categories.slice(0, 8).map((category, index) => (
+          {categoriesWithCounts.slice(0, 8).map((category, index) => (
             <FadeInOnScroll key={category.id} delay={index * 50}>
               <CategoryCard category={category} />
             </FadeInOnScroll>

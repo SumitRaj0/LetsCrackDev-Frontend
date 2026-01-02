@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect, useRef } from 'react'
+import { useState, useMemo, useEffect, useRef, useCallback } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { ResourceCard } from '@/modules/resources/components/ResourceCard'
 import { categories } from '@/modules/categories/data/categories'
@@ -117,6 +117,10 @@ export default function Resources() {
   const [isLoading, setIsLoading] = useState(true)
   const [totalPages, setTotalPages] = useState(1)
   const { handleError } = useErrorHandler()
+  const abortControllerRef = useRef<AbortController | null>(null)
+  const searchTimeoutRef = useRef<NodeJS.Timeout | null>(null)
+  const lastFetchTimeRef = useRef<number>(0)
+  const fetchResourcesRef = useRef<(() => Promise<void>) | null>(null)
 
   // Initialize search query from URL
   useEffect(() => {
@@ -126,9 +130,44 @@ export default function Resources() {
     }
   }, [searchParams])
 
-  // Fetch resources from API
+  // Sync category from URL params when they change
   useEffect(() => {
-    const fetchResources = async () => {
+    const urlCategory = searchParams.get('category')
+    if (urlCategory && urlCategory !== selectedCategory) {
+      setSelectedCategory(urlCategory)
+    } else if (!urlCategory && selectedCategory !== 'all') {
+      setSelectedCategory('all')
+    }
+  }, [searchParams, selectedCategory])
+
+  // Memoize handleError to prevent unnecessary re-renders
+  const stableHandleError = useCallback(
+    (error: unknown, options?: Parameters<typeof handleError>[1]) => {
+      handleError(error, options)
+    },
+    [handleError]
+  )
+
+  // Fetch resources from API with request cancellation
+  useEffect(() => {
+    // Cancel previous request if it exists
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort()
+    }
+
+    // Create new abort controller for this request
+    const abortController = new AbortController()
+    abortControllerRef.current = abortController
+
+    const fetchResources = async (forceRefresh = false) => {
+      // Skip if recently fetched (unless forced)
+      const now = Date.now()
+      if (!forceRefresh && now - lastFetchTimeRef.current < 2000) {
+        // Don't fetch if we fetched less than 2 seconds ago (unless forced)
+        return
+      }
+      lastFetchTimeRef.current = now
+
       try {
         setIsLoading(true)
         
@@ -147,8 +186,29 @@ export default function Resources() {
           search: searchQuery.trim() || undefined,
         })
 
+        // Check if request was aborted
+        if (abortController.signal.aborted) {
+          return
+        }
+
+        // Validate response structure
+        if (!response || !response.data || !Array.isArray(response.data.resources)) {
+          throw new Error('Invalid response structure from API')
+        }
+
         // Map backend resources to frontend format
-        const mappedResources = response.data.resources.map(mapBackendResourceToFrontend)
+        let mappedResources: Resource[] = []
+        try {
+          mappedResources = response.data.resources.map((resource: any) => {
+            try {
+              return mapBackendResourceToFrontend(resource)
+            } catch {
+              return null
+            }
+          }).filter((r: Resource | null): r is Resource => r !== null)
+        } catch (mappingError) {
+          throw new Error(`Failed to map resources: ${mappingError}`)
+        }
         
         // Sort resources (backend already sorts by newest, but we can sort client-side for rating/popular)
         let sortedResources = [...mappedResources]
@@ -157,24 +217,78 @@ export default function Resources() {
         } else if (sortBy === 'popular') {
           sortedResources.sort((a, b) => b.savedCount - a.savedCount)
         }
-        // 'newest' is already sorted by backend
         
         setResources(sortedResources)
         setTotalPages(response.data.pagination.totalPages)
-      } catch (error) {
-        handleError(error, {
+      } catch (error: any) {
+        // Ignore abort errors
+        if (error?.name === 'AbortError' || abortController.signal.aborted) {
+          return
+        }
+        
+        stableHandleError(error, {
           showToast: true,
           logError: true,
           context: { component: 'Resources', action: 'fetchResources' },
         })
         setResources([])
       } finally {
-        setIsLoading(false)
+        // Only update loading state if request wasn't aborted
+        if (!abortController.signal.aborted) {
+          setIsLoading(false)
+        }
       }
     }
 
-    fetchResources()
-  }, [currentPage, selectedCategory, selectedDifficulty, searchQuery, sortBy, handleError])
+    // Store fetchResources function reference for use in other effects
+    fetchResourcesRef.current = () => fetchResources(true)
+
+    // Debounce search queries to avoid too many requests
+    if (searchQuery.trim()) {
+      if (searchTimeoutRef.current) {
+        clearTimeout(searchTimeoutRef.current)
+      }
+      searchTimeoutRef.current = setTimeout(() => {
+        fetchResources()
+      }, 300) // 300ms debounce for search
+    } else {
+      fetchResources()
+    }
+
+    // Cleanup function
+    return () => {
+      if (searchTimeoutRef.current) {
+        clearTimeout(searchTimeoutRef.current)
+      }
+      abortController.abort()
+    }
+  }, [currentPage, selectedCategory, selectedDifficulty, searchQuery, sortBy, stableHandleError])
+
+  // Auto-refresh when page becomes visible (user switches back from admin tab)
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible' && fetchResourcesRef.current) {
+        fetchResourcesRef.current()
+      }
+    }
+
+    const handleFocus = () => {
+      if (fetchResourcesRef.current) {
+        fetchResourcesRef.current()
+      }
+    }
+
+    // Listen to visibility changes (tab switching)
+    document.addEventListener('visibilitychange', handleVisibilityChange)
+    
+    // Listen to window focus (switching between windows/apps)
+    window.addEventListener('focus', handleFocus)
+
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange)
+      window.removeEventListener('focus', handleFocus)
+    }
+  }, [])
 
   // Filter and sort resources (client-side for additional sorting)
   const filteredResources = useMemo(() => {
@@ -184,8 +298,13 @@ export default function Resources() {
   // Pagination - resources are already paginated from backend
   const paginatedResources = filteredResources
 
-  // Reset to page 1 when filters change
+  // Reset to page 1 when filters change (but not on initial mount)
+  const isInitialMount = useRef(true)
   useEffect(() => {
+    if (isInitialMount.current) {
+      isInitialMount.current = false
+      return
+    }
     setCurrentPage(1)
   }, [selectedCategory, selectedDifficulty, searchQuery, sortBy])
 
@@ -197,6 +316,63 @@ export default function Resources() {
       setSearchParams({ category })
     }
   }
+
+  // Get active filters
+  const activeFilters = useMemo(() => {
+    const filters: Array<{ key: string; label: string; value: string; onRemove: () => void }> = []
+    
+    if (selectedCategory !== 'all') {
+      const categoryName = categories.find(c => c.slug === selectedCategory)?.name || selectedCategory
+      filters.push({
+        key: 'category',
+        label: 'Category',
+        value: categoryName,
+        onRemove: () => {
+          setSelectedCategory('all')
+          setSearchParams({})
+        },
+      })
+    }
+    
+    if (selectedDifficulty !== 'all') {
+      filters.push({
+        key: 'difficulty',
+        label: 'Difficulty',
+        value: selectedDifficulty,
+        onRemove: () => setSelectedDifficulty('all'),
+      })
+    }
+    
+    if (searchQuery.trim()) {
+      filters.push({
+        key: 'search',
+        label: 'Search',
+        value: searchQuery,
+        onRemove: () => {
+          setSearchQuery('')
+          const newParams = new URLSearchParams(searchParams)
+          newParams.delete('search')
+          setSearchParams(newParams)
+        },
+      })
+    }
+    
+    if (sortBy !== 'newest') {
+      const sortLabels: Record<SortOption, string> = {
+        newest: 'Newest',
+        rating: 'Highest Rated',
+        popular: 'Most Popular',
+      }
+      filters.push({
+        key: 'sort',
+        label: 'Sort',
+        value: sortLabels[sortBy],
+        onRemove: () => setSortBy('newest'),
+      })
+    }
+    
+    return filters
+  }, [selectedCategory, selectedDifficulty, searchQuery, sortBy, searchParams, setSearchParams])
 
   return (
     <div className="min-h-screen">
@@ -241,6 +417,59 @@ export default function Resources() {
                 />
               </svg>
             </Button>
+
+            {/* Active Filters Display */}
+            {activeFilters.length > 0 && (
+              <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700 animate-fade-in">
+                <div className="flex flex-wrap items-center gap-2 mb-3">
+                  <span className="text-sm font-medium text-gray-600 dark:text-gray-400">Active filters:</span>
+                  {activeFilters.map(filter => (
+                    <div
+                      key={filter.key}
+                      className="inline-flex items-center gap-2 px-3 py-1.5 bg-indigo-100 dark:bg-indigo-900/40 text-indigo-800 dark:text-indigo-200 rounded-lg text-sm font-medium border border-indigo-200 dark:border-indigo-800"
+                    >
+                      <span className="text-xs text-indigo-600 dark:text-indigo-400">{filter.label}:</span>
+                      <span>{filter.value}</span>
+                      <button
+                        type="button"
+                        onClick={filter.onRemove}
+                        className="ml-1 hover:bg-indigo-200 dark:hover:bg-indigo-800 rounded-full p-0.5 transition-colors"
+                        aria-label={`Remove ${filter.label} filter`}
+                      >
+                        <svg
+                          className="w-4 h-4"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M6 18L18 6M6 6l12 12"
+                          />
+                        </svg>
+                      </button>
+                    </div>
+                  ))}
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    className="text-xs text-indigo-600 dark:text-indigo-400 hover:text-indigo-700 dark:hover:text-indigo-300"
+                    onClick={() => {
+                      setSelectedCategory('all')
+                      setSelectedDifficulty('all')
+                      setSortBy('newest')
+                      setSearchQuery('')
+                      setSearchParams({})
+                    }}
+                  >
+                    Clear all
+                  </Button>
+                </div>
+              </div>
+            )}
 
             {/* Filters */}
             {showFilters && (
@@ -315,14 +544,8 @@ export default function Resources() {
               {paginatedResources.length} resource{paginatedResources.length !== 1 ? 's' : ''} found
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6">
-              {paginatedResources.map((resource, index) => (
-                <div
-                  key={resource.id}
-                  className="animate-fade-in-up"
-                  style={{ animationDelay: `${index * 50}ms` }}
-                >
-                  <ResourceCard resource={resource} />
-                </div>
+              {paginatedResources.map((resource) => (
+                <ResourceCard key={resource.id} resource={resource} />
               ))}
             </div>
 

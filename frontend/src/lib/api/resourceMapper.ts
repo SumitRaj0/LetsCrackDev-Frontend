@@ -20,17 +20,21 @@ export function mapBackendResourceToFrontend(backendResource: BackendResource): 
     advanced: 5.0,
   }
   
+  // Ensure link/url is properly set
+  const url = backendResource.link?.trim() || ''
+  
   return {
     id: backendResource._id,
     title: backendResource.title,
     description: backendResource.description,
     category: backendResource.category,
     categorySlug,
-    url: backendResource.link,
+    url,
     createdAt: backendResource.createdAt,
     rating: difficultyToRating[backendResource.difficulty] || 4.0,
     tags: backendResource.tags,
     savedCount: 0, // Backend doesn't have this, default to 0
+    status: backendResource.status || 'published', // Default to published if not set
   }
 }
 

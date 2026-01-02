@@ -207,10 +207,10 @@ export default function Careers() {
           </h2>
           <div className="space-y-6">
             {jobListings.map(job => (
-              <Card key={job.id} className="p-6 md:p-8 hover-lift">
+              <Card key={job.id} className="p-6 md:p-8 hover-lift group">
                 <div className="flex flex-col md:flex-row md:items-start md:justify-between mb-4">
                   <div className="flex-1">
-                    <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
+                    <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-2 group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors">
                       {job.title}
                     </h3>
                     <div className="flex flex-wrap gap-3 text-sm text-gray-600 dark:text-gray-400 mb-3">

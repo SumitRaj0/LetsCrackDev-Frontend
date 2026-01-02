@@ -8,7 +8,6 @@ import { createCheckout, verifyPayment } from '@/lib/api'
 import { useErrorHandler } from '@/contexts/ErrorContext'
 import { getStoredUser, isAuthenticatedWithPasswordGrant } from '@/utils/authStorage'
 import { useUser } from '@/contexts/UserContext'
-import { useToast } from '@/contexts/ToastContext'
 import { useAuthModal } from '@/contexts/AuthModalContext'
 import { AuthModal } from '@/components/auth/AuthModal'
 import { CouponInput } from '@/components/checkout/CouponInput'
@@ -34,7 +33,6 @@ export default function PremiumCheckout() {
   const [appliedCouponCode, setAppliedCouponCode] = useState<string | undefined>()
   const { handleError } = useErrorHandler()
   const { user, isLoading: userLoading } = useUser()
-  const { showError: showToastError } = useToast()
   const { isOpen, mode, openModal, closeModal } = useAuthModal()
   const storedUser = getStoredUser()
 
@@ -140,6 +138,7 @@ export default function PremiumCheckout() {
                   purchaseId: response.data.purchaseId,
                   amount: price,
                   type,
+                  serviceId: type === 'service' ? id : undefined,
                 },
               })
             } else {
@@ -253,6 +252,40 @@ export default function PremiumCheckout() {
                         }}
                         appliedCouponCode={appliedCouponCode}
                       />
+
+                      {/* Test Mode Notice - Only show in dev */}
+                      {import.meta.env.DEV && (
+                        <div className="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg p-4">
+                          <p className="text-sm text-yellow-800 dark:text-yellow-200 font-semibold mb-2">
+                            ⚠️ Razorpay Test Mode Limitation
+                          </p>
+                          <p className="text-xs text-yellow-700 dark:text-yellow-300 mb-2">
+                            <strong>UPI payments don't work in test mode.</strong> Razorpay test mode doesn't support UPI verification. You'll see "we can't verify UPI Handle" error.
+                          </p>
+                          <p className="text-xs text-yellow-700 dark:text-yellow-300 mb-2 font-semibold">
+                            ✅ Use Test Card Instead:
+                          </p>
+                          <div className="bg-white dark:bg-gray-800 rounded p-3 text-xs text-yellow-900 dark:text-yellow-100">
+                            <div className="space-y-1">
+                              <div><strong>Card Number:</strong> 5267 3181 8797 5449 (Indian test card)</div>
+                              <div className="text-yellow-600 dark:text-yellow-400 text-[10px]">⚠️ Use Indian test cards only - International cards are blocked</div>
+                              <div><strong>CVV:</strong> Any 3 digits (e.g., 123)</div>
+                              <div><strong>Expiry:</strong> Any future date (e.g., 12/25)</div>
+                              <div><strong>Name:</strong> Any name</div>
+                              <div className="mt-2 pt-2 border-t border-yellow-300 dark:border-yellow-700">
+                                <div className="text-[10px] text-yellow-600 dark:text-yellow-400">
+                                  <strong>Alternative test cards:</strong><br/>
+                                  4012 0010 3714 1112<br/>
+                                  5104 0600 0000 0008
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                          <p className="text-xs text-yellow-600 dark:text-yellow-400 mt-2">
+                            💡 UPI will work automatically in production/live mode.
+                          </p>
+                        </div>
+                      )}
 
                       <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
                         <p className="text-sm text-blue-800 dark:text-blue-200">

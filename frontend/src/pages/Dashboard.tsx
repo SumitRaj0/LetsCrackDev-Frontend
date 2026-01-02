@@ -1,29 +1,22 @@
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
+import { useState, useEffect } from 'react'
 import { allResources } from '@/modules/resources/data/allResources'
 import { ResourceCard } from '@/modules/resources/components/ResourceCard'
 import { dummyUser } from '@/lib/dummyUser'
 import { useUser } from '@/hooks/useUser'
-
-// Dummy courses data
-const ongoingCourses = [
-  {
-    id: '1',
-    title: 'Advanced React Patterns',
-    progress: 65,
-    thumbnail: '📚',
-    instructor: 'Jane Smith',
-  },
-  {
-    id: '2',
-    title: 'Node.js Mastery',
-    progress: 30,
-    thumbnail: '🚀',
-    instructor: 'Mike Johnson',
-  },
-]
+import { getPurchases, type Purchase } from '@/lib/api/purchases.api'
+import { useErrorHandler } from '@/contexts/ErrorContext'
+import { Card } from '@/components/ui/card'
+import { Button } from '@/components/ui/button'
+import { LoadingSpinner } from '@/components/ui/LoadingSpinner'
 
 export default function Dashboard() {
+  const navigate = useNavigate()
   const { user } = useUser()
+  const { handleError } = useErrorHandler()
+  const [purchasedServices, setPurchasedServices] = useState<Purchase[]>([])
+  const [isLoadingPurchases, setIsLoadingPurchases] = useState(true)
+  
   const profileUser = user
     ? {
         ...dummyUser,
@@ -35,6 +28,39 @@ export default function Dashboard() {
 
   const savedResources = allResources.filter(r => profileUser.savedResources.includes(r.id))
   const recentResources = allResources.filter(r => profileUser.recentlyViewed.includes(r.id))
+
+  useEffect(() => {
+    // Only fetch if user is authenticated
+    if (user) {
+      fetchPurchasedServices()
+    }
+  }, [user])
+
+  const fetchPurchasedServices = async () => {
+    try {
+      setIsLoadingPurchases(true)
+      const response = await getPurchases({
+        status: 'completed',
+        purchaseType: 'service',
+      })
+      if (response.success) {
+        setPurchasedServices(response.data.purchases)
+      }
+    } catch (error) {
+      handleError(error, {
+        showToast: false,
+        logError: true,
+        context: { component: 'Dashboard', action: 'fetchPurchasedServices' },
+      })
+    } finally {
+      setIsLoadingPurchases(false)
+    }
+  }
+
+  // Filter interview kits from purchased services
+  const interviewKits = purchasedServices.filter(
+    (purchase) => purchase.serviceId?.slug === 'javascript-interview-mastery-kit'
+  )
 
   return (
     <div className="min-h-screen">
@@ -75,11 +101,11 @@ export default function Dashboard() {
           </div>
           <div className="bg-white dark:bg-gray-800 rounded-lg border p-6">
             <div className="text-3xl font-bold text-black dark:text-white mb-1">
-              {ongoingCourses.length}
+              {interviewKits.length}
             </div>
-            <div className="text-gray-600 dark:text-gray-400 text-sm mb-2">Enrolled Courses</div>
+            <div className="text-gray-600 dark:text-gray-400 text-sm mb-2">Preparation Kits</div>
             <Link
-              to="/dashboard/courses"
+              to="/dashboard/documents"
               className="text-sm text-black dark:text-white hover:underline"
             >
               View all →
@@ -99,59 +125,60 @@ export default function Dashboard() {
           </div>
         </div>
 
-        {/* Ongoing Courses */}
+        {/* My Preparation Kits */}
         <div className="mb-12">
           <div className="flex items-center justify-between mb-6">
-            <h2 className="text-2xl font-bold text-black dark:text-white">Ongoing Courses</h2>
+            <h2 className="text-2xl font-bold text-black dark:text-white">My Preparation Kits</h2>
             <Link
-              to="/dashboard/courses"
+              to="/dashboard/documents"
               className="text-sm text-gray-600 dark:text-gray-400 hover:text-black dark:hover:text-white"
             >
               View all →
             </Link>
           </div>
-          {ongoingCourses.length > 0 ? (
+          {isLoadingPurchases ? (
+            <div className="flex justify-center items-center py-12">
+              <LoadingSpinner size="sm" />
+            </div>
+          ) : interviewKits.length > 0 ? (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {ongoingCourses.map(course => (
-                <Link
-                  key={course.id}
-                  to={`/courses/${course.id}/view`}
-                  className="bg-white dark:bg-gray-800 rounded-lg border p-6 hover:shadow-md transition-shadow"
-                >
-                  <div className="flex items-start gap-4">
-                    <div className="text-4xl">{course.thumbnail}</div>
-                    <div className="flex-1">
-                      <h3 className="font-semibold text-lg text-black dark:text-white mb-1">
-                        {course.title}
-                      </h3>
-                      <p className="text-sm text-gray-600 dark:text-gray-400 mb-3">
-                        by {course.instructor}
-                      </p>
-                      <div className="mb-2">
-                        <div className="flex items-center justify-between text-xs text-gray-600 dark:text-gray-400 mb-1">
-                          <span>Progress</span>
-                          <span>{course.progress}%</span>
+              {interviewKits.map((purchase) => {
+                const serviceName = purchase.serviceId?.name || 'Interview Kit'
+                const serviceId = purchase.serviceId?._id || ''
+                return (
+                  <Card key={purchase._id} className="p-6 hover:shadow-md transition-shadow duration-150 group">
+                    <div className="flex items-start gap-4">
+                      <div className="text-4xl">📚</div>
+                      <div className="flex-1">
+                        <div className="flex items-center justify-between mb-2">
+                          <h3 className="font-semibold text-lg text-black dark:text-white group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors">
+                            {serviceName}
+                          </h3>
+                          <span className="px-2 py-1 bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-200 text-xs font-medium rounded">
+                            Purchased
+                          </span>
                         </div>
-                        <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
-                          <div
-                            className="bg-black dark:bg-white h-2 rounded-full transition-all"
-                            style={{ width: `${course.progress}%` }}
-                          ></div>
-                        </div>
+                        <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
+                          50 curated JavaScript interview questions with structured answers
+                        </p>
+                        <Button
+                          variant="primary"
+                          className="w-full"
+                          onClick={() => navigate(`/interview-kit/${serviceId}`)}
+                        >
+                          Access Interview Kit →
+                        </Button>
                       </div>
-                      <span className="text-sm text-black dark:text-white hover:underline">
-                        Continue Course →
-                      </span>
                     </div>
-                  </div>
-                </Link>
-              ))}
+                  </Card>
+                )
+              })}
             </div>
           ) : (
             <div className="bg-white dark:bg-gray-800 rounded-lg border p-12 text-center">
-              <p className="text-gray-600 dark:text-gray-400 mb-4">No ongoing courses</p>
-              <Link to="/courses" className="text-black dark:text-white hover:underline text-sm">
-                Browse Courses →
+              <p className="text-gray-600 dark:text-gray-400 mb-4">No preparation kits yet</p>
+              <Link to="/premium" className="text-black dark:text-white hover:underline text-sm">
+                Browse Premium Services →
               </Link>
             </div>
           )}

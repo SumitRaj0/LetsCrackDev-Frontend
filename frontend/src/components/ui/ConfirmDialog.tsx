@@ -28,12 +28,6 @@ export function ConfirmDialog({
     onConfirm()
   }
 
-  const variantStyles = {
-    danger: 'text-red-600 dark:text-red-400',
-    warning: 'text-yellow-600 dark:text-yellow-400',
-    info: 'text-blue-600 dark:text-blue-400',
-  }
-
   const buttonVariants = {
     danger: 'bg-red-600 hover:bg-red-700 text-white',
     warning: 'bg-yellow-600 hover:bg-yellow-700 text-white',

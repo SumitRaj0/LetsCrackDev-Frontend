@@ -1,13 +1,49 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { CategoryCard } from '@/modules/categories/components/CategoryCard'
 import { categories } from '@/modules/categories/data/categories'
 import { EmptyState } from '@/components/shared/EmptyState'
 import { SearchBar } from '@/components/shared/SearchBar'
+import { getResources } from '@/lib/api/resources.api'
+import { Category } from '@/modules/categories/types'
+import { LoadingSpinner } from '@/components/ui/LoadingSpinner'
 
 export default function Categories() {
   const [searchQuery, setSearchQuery] = useState('')
+  const [categoriesWithCounts, setCategoriesWithCounts] = useState<Category[]>(categories)
+  const [loading, setLoading] = useState(true)
 
-  const filteredCategories = categories.filter(category =>
+  // Fetch resource counts for each category
+  useEffect(() => {
+    const fetchResourceCounts = async () => {
+      try {
+        setLoading(true)
+        const counts = await Promise.all(
+          categories.map(async (category) => {
+            try {
+              const response = await getResources({ category: category.slug, limit: 1 })
+              return {
+                ...category,
+                resourceCount: response.data.pagination.total,
+              }
+            } catch (error) {
+              // If API fails, keep the original count
+              return category
+            }
+          })
+        )
+        setCategoriesWithCounts(counts)
+      } catch (error) {
+        // If all fails, keep original categories
+        console.error('Failed to fetch resource counts:', error)
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    fetchResourceCounts()
+  }, [])
+
+  const filteredCategories = categoriesWithCounts.filter(category =>
     category.name.toLowerCase().includes(searchQuery.toLowerCase())
   )
 
@@ -64,7 +100,11 @@ export default function Categories() {
 
       {/* Categories Grid */}
       <div className="max-w-6xl mx-auto px-4 py-16 md:py-24">
-        {filteredCategories.length > 0 ? (
+        {loading ? (
+          <div className="flex justify-center items-center py-20">
+            <LoadingSpinner showText />
+          </div>
+        ) : filteredCategories.length > 0 ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {filteredCategories.map(category => (
               <CategoryCard key={category.id} category={category} />

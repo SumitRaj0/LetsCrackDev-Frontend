@@ -1,9 +1,9 @@
 import { useState, useMemo, useEffect } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { Link, useNavigate, useLocation } from 'react-router-dom'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { deleteResource, getResources } from '@/lib/api/resources.api'
+import { deleteResource, getResources, updateResource } from '@/lib/api/resources.api'
 import { mapBackendResourceToFrontend } from '@/lib/api/resourceMapper'
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner'
 import { useToast } from '@/contexts/ToastContext'
@@ -11,6 +11,7 @@ import { useErrorHandler } from '@/contexts/ErrorContext'
 
 export default function AdminResources() {
   const navigate = useNavigate()
+  const location = useLocation()
   const { showSuccess } = useToast()
   const { handleError } = useErrorHandler()
   const [searchQuery, setSearchQuery] = useState('')
@@ -20,35 +21,53 @@ export default function AdminResources() {
   const [isLoading, setIsLoading] = useState(true)
 
   // Fetch resources from API
-  useEffect(() => {
-    const fetchResources = async () => {
-      try {
-        setIsLoading(true)
-        const response = await getResources({
-          page: 1,
-          limit: 100, // Get all for admin
-        })
-        if (response.success && response.data.resources) {
-          const mappedResources = response.data.resources.map(mapBackendResourceToFrontend)
-          setResources(mappedResources)
-        }
-      } catch (error) {
-        handleError(error, {
-          showToast: true,
-          logError: true,
-          context: { component: 'AdminResources', action: 'fetchResources' },
-        })
-      } finally {
-        setIsLoading(false)
+  const fetchResources = async () => {
+    try {
+      setIsLoading(true)
+      console.log('[AdminResources] Fetching resources...')
+      const response = await getResources({
+        page: 1,
+        limit: 100, // Get all for admin
+      })
+      console.log('[AdminResources] API response:', response)
+      console.log('[AdminResources] Response success:', response?.success)
+      console.log('[AdminResources] Resources array:', response?.data?.resources)
+      console.log('[AdminResources] Resources count:', response?.data?.resources?.length)
+      
+      if (response.success && response.data.resources) {
+        console.log('[AdminResources] Mapping resources...')
+        const mappedResources = response.data.resources.map(mapBackendResourceToFrontend)
+        console.log('[AdminResources] Mapped resources:', mappedResources)
+        console.log('[AdminResources] Mapped count:', mappedResources.length)
+        setResources(mappedResources)
+      } else {
+        console.warn('[AdminResources] No resources in response or response not successful')
+        setResources([])
       }
+    } catch (error) {
+      console.error('[AdminResources] Error fetching resources:', error)
+      handleError(error, {
+        showToast: true,
+        logError: true,
+        context: { component: 'AdminResources', action: 'fetchResources' },
+      })
+      setResources([])
+    } finally {
+      setIsLoading(false)
     }
+  }
 
+  useEffect(() => {
     fetchResources()
-  }, [handleError])
+  }, [handleError, location.pathname]) // Refresh when pathname changes (user navigates back)
 
   // Filter resources
   const filteredResources = useMemo(() => {
     let filtered = [...resources]
+    
+    console.log('[AdminResources] Filtering resources. Total:', resources.length)
+    console.log('[AdminResources] Status filter:', statusFilter)
+    console.log('[AdminResources] Resources with status:', resources.map(r => ({ id: r.id, title: r.title, status: r.status })))
 
     if (searchQuery.trim()) {
       const query = searchQuery.toLowerCase()
@@ -57,18 +76,24 @@ export default function AdminResources() {
       )
     }
 
-    // Note: In a real app, resources would have a 'status' field
-    // For now, we'll just show all resources as 'published'
-    if (statusFilter === 'draft') {
-      filtered = [] // No drafts in dummy data
+    // Filter by status
+    if (statusFilter !== 'all') {
+      const beforeCount = filtered.length
+      filtered = filtered.filter(r => {
+        // Default to 'published' if status is undefined (backward compatibility)
+        const resourceStatus = r.status || 'published'
+        return resourceStatus === statusFilter
+      })
+      console.log('[AdminResources] After status filter:', filtered.length, 'from', beforeCount)
     }
 
     if (categoryFilter !== 'all') {
       filtered = filtered.filter(r => r.categorySlug === categoryFilter)
     }
 
+    console.log('[AdminResources] Final filtered count:', filtered.length)
     return filtered
-  }, [searchQuery, statusFilter, categoryFilter])
+  }, [searchQuery, statusFilter, categoryFilter, resources])
 
   const handleDelete = async (id: string) => {
     if (!window.confirm('Are you sure you want to delete this resource?')) return
@@ -87,10 +112,56 @@ export default function AdminResources() {
     }
   }
 
-  const handlePublish = async (_id: string) => {
-    // Publishing is not a separate API endpoint - resources are always "published"
-    // This could be implemented as updating a status field if needed in the future
-    showSuccess('Resource is already published')
+  const handlePublish = async (id: string) => {
+    try {
+      const resource = resources.find(r => r.id === id)
+      if (!resource) {
+        console.error('[AdminResources] Resource not found for publish/unpublish:', id)
+        return
+      }
+
+      const currentStatus = resource.status || 'published' // Default to published if undefined
+      const newStatus = currentStatus === 'published' ? 'draft' : 'published'
+      const action = newStatus === 'published' ? 'activated' : 'deactivated'
+
+      console.log('[AdminResources] Changing resource status:', {
+        id,
+        title: resource.title,
+        currentStatus,
+        newStatus,
+        action
+      })
+
+      // Update resource status
+      const response = await updateResource(id, { status: newStatus })
+      
+      console.log('[AdminResources] Update response:', response)
+      
+      if (response.success && response.data.resource) {
+        console.log('[AdminResources] Resource updated successfully:', {
+          id: response.data.resource._id,
+          title: response.data.resource.title,
+          status: response.data.resource.status
+        })
+        showSuccess(`Resource ${action} successfully`)
+        // Refresh the list immediately
+        await fetchResources()
+        // Force a small delay to ensure backend has processed the update
+        setTimeout(() => {
+          fetchResources()
+        }, 500)
+      } else {
+        console.error('[AdminResources] Update failed:', response)
+        throw new Error('Failed to update resource status')
+      }
+    } catch (error) {
+      console.error('[AdminResources] Error in handlePublish:', error)
+      handleError(error, {
+        showToast: true,
+        logError: true,
+        context: { component: 'AdminResources', action: 'handlePublish' },
+      })
+    }
   }
 
   const categories = Array.from(new Set(resources.map(r => r.categorySlug)))
@@ -133,11 +204,21 @@ export default function AdminResources() {
 
           {/* Actions */}
           <div className="flex items-center justify-between">
-            <Link to="/admin/resources/new">
-              <Button variant="primary" size="md">
-                Add New Resource
+            <div className="flex items-center gap-3">
+              <Link to="/admin/resources/new">
+                <Button variant="primary" size="md">
+                  Add New Resource
+                </Button>
+              </Link>
+              <Button 
+                variant="outline" 
+                size="md"
+                onClick={fetchResources}
+                disabled={isLoading}
+              >
+                {isLoading ? 'Refreshing...' : 'Refresh'}
               </Button>
-            </Link>
+            </div>
           </div>
         </div>
       </div>
@@ -195,8 +276,8 @@ export default function AdminResources() {
                 className="w-full px-4 py-2 border border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:focus:ring-indigo-400 focus:border-transparent"
               >
                 <option value="all">All Status</option>
-                <option value="published">Published</option>
-                <option value="draft">Draft</option>
+                    <option value="published">Active</option>
+                    <option value="draft">Unactive</option>
               </select>
             </div>
             <div>
@@ -250,9 +331,6 @@ export default function AdminResources() {
                         <div className="text-sm font-medium text-black dark:text-white">
                           {resource.title}
                         </div>
-                        <div className="text-xs text-gray-500 dark:text-gray-400 line-clamp-1">
-                          {resource.description}
-                        </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <span className="text-sm text-gray-700 dark:text-gray-300">
@@ -270,8 +348,11 @@ export default function AdminResources() {
                         </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <Badge variant="success" size="sm">
-                          Published
+                        <Badge 
+                          variant={resource.status === 'published' ? 'success' : 'default'} 
+                          size="sm"
+                        >
+                          {resource.status === 'published' ? 'Active' : 'Unactive'}
                         </Badge>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm">
@@ -288,9 +369,13 @@ export default function AdminResources() {
                             variant="ghost"
                             onClick={() => handlePublish(resource.id)}
                             size="sm"
-                            className="text-green-600 dark:text-green-400 hover:text-green-800 dark:hover:text-green-300"
+                            className={
+                              resource.status === 'published'
+                                ? 'text-orange-600 dark:text-orange-400 hover:text-orange-800 dark:hover:text-orange-300'
+                                : 'text-green-600 dark:text-green-400 hover:text-green-800 dark:hover:text-green-300'
+                            }
                           >
-                            Publish
+                            {resource.status === 'published' ? 'Make Unactive' : 'Make Active'}
                           </Button>
                           <Button
                             variant="ghost"
@@ -308,9 +393,20 @@ export default function AdminResources() {
                   <tr>
                     <td
                       colSpan={5}
-                      className="px-6 py-8 text-center text-gray-500 dark:text-gray-400"
+                      className="px-6 py-8 text-center"
                     >
-                      No resources found
+                      <div className="flex flex-col items-center gap-2">
+                        <p className="text-gray-500 dark:text-gray-400">
+                          {isLoading ? 'Loading resources...' : 'No resources found'}
+                        </p>
+                        {!isLoading && resources.length === 0 && (
+                          <Link to="/admin/resources/new">
+                            <Button variant="primary" size="sm">
+                              Create Your First Resource
+                            </Button>
+                          </Link>
+                        )}
+                      </div>
                     </td>
                   </tr>
                 )}
@@ -319,9 +415,26 @@ export default function AdminResources() {
           </div>
         </div>
 
-        {/* Results count */}
-        <div className="mt-4 text-sm text-gray-600 dark:text-gray-400">
-          Showing {filteredResources.length} of {resources.length} resources
+        {/* Results count and debug info */}
+        <div className="mt-4 space-y-2">
+          <div className="text-sm text-gray-600 dark:text-gray-400">
+            Showing {filteredResources.length} of {resources.length} resources
+          </div>
+          {resources.length === 0 && !isLoading && (
+            <div className="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg p-4">
+              <p className="text-sm text-yellow-800 dark:text-yellow-200">
+                <strong>No resources found.</strong> This could mean:
+              </p>
+              <ul className="list-disc list-inside mt-2 text-sm text-yellow-700 dark:text-yellow-300 space-y-1">
+                <li>No resources have been created yet</li>
+                <li>The API returned an empty array</li>
+                <li>Check the browser console for API response details</li>
+              </ul>
+              <p className="text-xs text-yellow-600 dark:text-yellow-400 mt-2">
+                Check the browser console (F12) for detailed logs about the API call.
+              </p>
+            </div>
+          )}
         </div>
       </div>
     </div>
