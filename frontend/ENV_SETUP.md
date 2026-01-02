@@ -6,12 +6,13 @@ This document describes all required and optional environment variables for the 
 
 ### API Configuration
 ```env
-VITE_API_URL=https://your-backend-url.com/api
+VITE_API_URL=https://letscrackdev-backend.onrender.com/api
 ```
 - **Description**: Backend API base URL
-- **Required**: Yes (in production)
-- **Development Default**: `http://localhost:3001/api` (if not set)
-- **Example**: `https://letscrackdev-backend.onrender.com/api`
+- **Required**: No (defaults to Render backend: `https://letscrackdev-backend.onrender.com/api`)
+- **Development Default**: `http://localhost:3001/api` (if not set in dev mode)
+- **Production Default**: `https://letscrackdev-backend.onrender.com/api` (if not set)
+- **Note**: Set to `http://localhost:3001/api` in your local `.env` file for local development
 
 ### EmailJS Configuration (for contact form)
 ```env

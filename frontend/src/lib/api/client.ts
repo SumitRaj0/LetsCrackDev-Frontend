@@ -33,8 +33,12 @@ export class ApiClientError extends Error {
   }
 }
 
-// API Base URL - must be set via environment variable in production
-const API_BASE_URL = import.meta.env.VITE_API_URL || (import.meta.env.DEV ? 'http://localhost:3001/api' : '')
+// API Base URL - uses Render backend (https://letscrackdev-backend.onrender.com/api) as default
+// Override with VITE_API_URL environment variable for local development or custom backend
+const API_BASE_URL = import.meta.env.VITE_API_URL || 
+  (import.meta.env.DEV 
+    ? 'http://localhost:3001/api' 
+    : 'https://letscrackdev-backend.onrender.com/api')
 const DEFAULT_TIMEOUT = 30000 // 30 seconds
 
 // Validate API URL in production
