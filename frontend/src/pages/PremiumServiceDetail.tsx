@@ -236,7 +236,7 @@ export default function PremiumServiceDetail() {
                 <span className="text-lg text-gray-500 dark:text-gray-400">one-time payment</span>
               </div>
             </div>
-                <div className="flex items-center gap-3 flex-wrap">
+            <div className="flex items-center gap-3 flex-wrap">
                   {hasPurchased ? (
                     // User has already purchased - show access button
                     service.slug === 'javascript-interview-mastery-kit' ? (
@@ -258,20 +258,20 @@ export default function PremiumServiceDetail() {
                     )
                   ) : (
                     // User hasn't purchased - show pay button
-                    <Button
-                      variant="primary"
-                      size="lg"
-                      onClick={() =>
-                        navigate(`/premium/checkout?type=service&id=${service._id}&price=${service.price}`)
-                      }
-                    >
-                      Pay Now - ₹{service.price}
-                    </Button>
+              <Button
+                variant="primary"
+                size="lg"
+                onClick={() =>
+                  navigate(`/premium/checkout?type=service&id=${service._id}&price=${service.price}`)
+                }
+              >
+                Pay Now - ₹{service.price}
+              </Button>
                   )}
-                  <Button variant="outline" size="lg" onClick={() => navigate('/premium')}>
-                    Back to Services
-                  </Button>
-                </div>
+              <Button variant="outline" size="lg" onClick={() => navigate('/premium')}>
+                Back to Services
+              </Button>
+            </div>
           </div>
         </div>
       </div>
@@ -526,29 +526,29 @@ export default function PremiumServiceDetail() {
           ) : (
             /* Fallback to standard format if no config */
             service.deliverables && service.deliverables.length > 0 && (
-              <Card className="p-6">
-                <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">What You'll Get</h2>
-                <ul className="space-y-3">
-                  {service.deliverables.map((deliverable, index) => (
-                    <li key={index} className="flex items-start gap-3">
-                      <svg
-                        className="w-5 h-5 text-green-500 mt-0.5 flex-shrink-0"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M5 13l4 4L19 7"
-                        />
-                      </svg>
-                      <span className="text-gray-700 dark:text-gray-300">{deliverable}</span>
-                    </li>
-                  ))}
-                </ul>
-              </Card>
+            <Card className="p-6">
+              <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">What You'll Get</h2>
+              <ul className="space-y-3">
+                {service.deliverables.map((deliverable, index) => (
+                  <li key={index} className="flex items-start gap-3">
+                    <svg
+                      className="w-5 h-5 text-green-500 mt-0.5 flex-shrink-0"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M5 13l4 4L19 7"
+                      />
+                    </svg>
+                    <span className="text-gray-700 dark:text-gray-300">{deliverable}</span>
+                  </li>
+                ))}
+              </ul>
+            </Card>
             )
           )}
 
