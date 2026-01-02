@@ -23,13 +23,11 @@ The error `vite: command not found` occurs because:
 
 ### Current Configuration
 
-The `vercel.json` file is configured to prevent auto-detection:
+The `vercel.json` file is already configured correctly:
 - `buildCommand`: `npm run build`
 - `installCommand`: `npm ci`
-- `framework`: `null` (prevents Vercel from auto-detecting and running vite directly)
+- `framework`: `vite`
 - `outputDirectory`: `dist`
-
-**Important:** Setting `framework: null` prevents Vercel from auto-detecting Vite and trying to run `vite build` directly, which fails because dependencies aren't installed yet.
 
 ### After Setting Root Directory
 
