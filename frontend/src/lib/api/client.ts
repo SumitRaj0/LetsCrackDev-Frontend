@@ -41,9 +41,10 @@ const API_BASE_URL = import.meta.env.VITE_API_URL ||
     : 'https://letscrackdev-backend.onrender.com/api')
 const DEFAULT_TIMEOUT = 30000 // 30 seconds
 
-// Validate API URL in production
-if (import.meta.env.PROD && !API_BASE_URL) {
-  throw new Error('VITE_API_URL environment variable is required in production')
+// API URL is now set with Render backend as default, so validation is not needed
+// But we can log a warning if VITE_API_URL is not set in production (optional)
+if (import.meta.env.PROD && !import.meta.env.VITE_API_URL) {
+  logger.log('Using default Render backend: https://letscrackdev-backend.onrender.com/api')
 }
 
 // Token getter function - will be set by auth service
