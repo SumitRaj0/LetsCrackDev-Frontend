@@ -1,8 +1,8 @@
 {
   "version": 2,
-  "buildCommand": "cd frontend && npm ci && npm run build",
-  "outputDirectory": "frontend/dist",
-  "installCommand": "cd frontend && npm ci",
+  "buildCommand": "npm ci && npm run build",
+  "outputDirectory": "/dist",
+  "installCommand": "npm ci",
   "framework": null,
   "rewrites": [
     {
@@ -49,9 +49,7 @@
         }
       ]
     }
-  ],
-  "env": {
-    "VITE_API_URL": "@vite_api_url"
-  }
+  ]
+
 }
 
