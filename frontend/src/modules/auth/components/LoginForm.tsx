@@ -110,13 +110,6 @@ export function LoginForm({ onClose }: LoginFormProps) {
     }
   }
 
-  const handleForgotPassword = () => {
-    // Close modal if open
-    onClose?.()
-    // Navigate to forgot password page
-    navigate('/forgot')
-  }
-
   return (
     <form className="space-y-4" onSubmit={handleSubmit}>
       {/* Email Input */}
@@ -225,8 +218,17 @@ export function LoginForm({ onClose }: LoginFormProps) {
         <div className="mt-2 flex justify-end">
           <button
             type="button"
-            onClick={handleForgotPassword}
-            className="text-sm text-indigo-400 hover:text-indigo-300 transition-colors"
+            onClick={(e) => {
+              e.preventDefault()
+              e.stopPropagation()
+              // Close modal first
+              onClose?.()
+              // Then navigate to forgot password page
+              setTimeout(() => {
+                navigate('/forgot')
+              }, 100)
+            }}
+            className="text-sm text-indigo-400 hover:text-indigo-300 transition-colors bg-transparent border-none cursor-pointer p-0"
           >
             Forgot Password?
           </button>
