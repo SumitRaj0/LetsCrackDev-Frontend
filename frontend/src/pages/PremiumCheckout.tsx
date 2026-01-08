@@ -253,39 +253,70 @@ export default function PremiumCheckout() {
                         appliedCouponCode={appliedCouponCode}
                       />
 
-                      {/* Test Mode Notice - Only show in dev */}
-                      {import.meta.env.DEV && (
-                        <div className="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg p-4">
-                          <p className="text-sm text-yellow-800 dark:text-yellow-200 font-semibold mb-2">
-                            ⚠️ Razorpay Test Mode Limitation
+                      {/* Test Card Information - Always visible for testing */}
+                      <div className="bg-gradient-to-r from-green-50 to-blue-50 dark:from-green-900/20 dark:to-blue-900/20 border-2 border-green-200 dark:border-green-800 rounded-lg p-5">
+                        <div className="flex items-center gap-2 mb-3">
+                          <svg className="w-5 h-5 text-green-600 dark:text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                          </svg>
+                          <p className="text-base text-green-800 dark:text-green-200 font-bold">
+                            Test Payment Card Details
                           </p>
-                          <p className="text-xs text-yellow-700 dark:text-yellow-300 mb-2">
-                            <strong>UPI payments don't work in test mode.</strong> Razorpay test mode doesn't support UPI verification. You'll see "we can't verify UPI Handle" error.
-                          </p>
-                          <p className="text-xs text-yellow-700 dark:text-yellow-300 mb-2 font-semibold">
-                            ✅ Use Test Card Instead:
-                          </p>
-                          <div className="bg-white dark:bg-gray-800 rounded p-3 text-xs text-yellow-900 dark:text-yellow-100">
-                            <div className="space-y-1">
-                              <div><strong>Card Number:</strong> 5267 3181 8797 5449 (Indian test card)</div>
-                              <div className="text-yellow-600 dark:text-yellow-400 text-[10px]">⚠️ Use Indian test cards only - International cards are blocked</div>
-                              <div><strong>CVV:</strong> Any 3 digits (e.g., 123)</div>
-                              <div><strong>Expiry:</strong> Any future date (e.g., 12/25)</div>
-                              <div><strong>Name:</strong> Any name</div>
-                              <div className="mt-2 pt-2 border-t border-yellow-300 dark:border-yellow-700">
-                                <div className="text-[10px] text-yellow-600 dark:text-yellow-400">
-                                  <strong>Alternative test cards:</strong><br/>
-                                  4012 0010 3714 1112<br/>
-                                  5104 0600 0000 0008
-                                </div>
+                        </div>
+                        <div className="bg-white dark:bg-gray-800 rounded-lg p-4 border border-green-300 dark:border-green-700">
+                          <div className="space-y-2 text-sm">
+                            <div className="flex items-center gap-2">
+                              <span className="font-semibold text-gray-700 dark:text-gray-300 min-w-[120px]">RuPay Card:</span>
+                              <code className="bg-gray-100 dark:bg-gray-700 px-3 py-1 rounded font-mono text-base font-bold text-green-700 dark:text-green-300">
+                                6074 8200 0000 0009
+                              </code>
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  navigator.clipboard.writeText('6074820000000009')
+                                  alert('RuPay card number copied!')
+                                }}
+                                className="text-xs text-blue-600 dark:text-blue-400 hover:underline ml-2"
+                              >
+                                Copy
+                              </button>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <span className="font-semibold text-gray-700 dark:text-gray-300 min-w-[120px]">Visa Card:</span>
+                              <code className="bg-gray-100 dark:bg-gray-700 px-3 py-1 rounded font-mono text-sm text-gray-700 dark:text-gray-300">
+                                5267 3181 8797 5449
+                              </code>
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  navigator.clipboard.writeText('5267318187975449')
+                                  alert('Visa card number copied!')
+                                }}
+                                className="text-xs text-blue-600 dark:text-blue-400 hover:underline ml-2"
+                              >
+                                Copy
+                              </button>
+                            </div>
+                            <div className="mt-3 pt-3 border-t border-gray-200 dark:border-gray-700 grid grid-cols-2 gap-3 text-xs">
+                              <div>
+                                <span className="font-semibold text-gray-600 dark:text-gray-400">CVV:</span>
+                                <span className="ml-2 text-gray-700 dark:text-gray-300">Any 3 digits (e.g., 123)</span>
+                              </div>
+                              <div>
+                                <span className="font-semibold text-gray-600 dark:text-gray-400">Expiry:</span>
+                                <span className="ml-2 text-gray-700 dark:text-gray-300">Any future date (e.g., 12/25)</span>
+                              </div>
+                              <div className="col-span-2">
+                                <span className="font-semibold text-gray-600 dark:text-gray-400">Name:</span>
+                                <span className="ml-2 text-gray-700 dark:text-gray-300">Any name</span>
                               </div>
                             </div>
                           </div>
-                          <p className="text-xs text-yellow-600 dark:text-yellow-400 mt-2">
-                            💡 UPI will work automatically in production/live mode.
-                          </p>
                         </div>
-                      )}
+                        <p className="text-xs text-green-700 dark:text-green-300 mt-3">
+                          💡 These are Razorpay test cards. Use these details for testing payments. UPI works only in production mode.
+                        </p>
+                      </div>
 
                       <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
                         <p className="text-sm text-blue-800 dark:text-blue-200">

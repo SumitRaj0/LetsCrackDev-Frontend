@@ -97,7 +97,7 @@ export default function Forgot() {
             </p>
           </div>
 
-          <div className="space-y-3">
+          <div className="space-y-2">
             <Button
               variant="primary"
               size="lg"
