@@ -33,13 +33,27 @@ export function Navbar() {
     return location.pathname.startsWith(path)
   }
 
+  const [isMobile, setIsMobile] = useState(false)
+
   useEffect(() => {
     const handleScroll = () => {
       setIsScrolled(window.scrollY > 10)
     }
 
+    // Check if mobile viewport
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 768) // md breakpoint
+    }
+    
+    checkMobile()
+    handleScroll() // Check initial scroll position
+
     window.addEventListener('scroll', handleScroll)
-    return () => window.removeEventListener('scroll', handleScroll)
+    window.addEventListener('resize', checkMobile)
+    return () => {
+      window.removeEventListener('scroll', handleScroll)
+      window.removeEventListener('resize', checkMobile)
+    }
   }, [])
 
   const handleLogin = () => {
@@ -74,7 +88,9 @@ export function Navbar() {
   return (
     <nav
       className={`fixed top-0 left-0 z-50 ${
-        isScrolled ? 'bg-white/80 dark:bg-gray-900/80 backdrop-blur-md shadow-sm' : 'bg-transparent'
+        isScrolled || isMobile 
+          ? 'bg-white/80 dark:bg-gray-900/80 backdrop-blur-md shadow-sm' 
+          : 'bg-transparent'
       }`}
       style={{
         right: isChatbotOpen ? `${chatbotWidth}px` : '0px',

@@ -14,6 +14,7 @@ export interface Service {
   slug: string
   deliverables: string[]
   availability: boolean
+  optedCount?: number // Number of users who purchased this service (completed purchases)
   createdBy: {
     _id: string
     name: string

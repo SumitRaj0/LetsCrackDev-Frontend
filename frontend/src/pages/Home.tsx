@@ -57,7 +57,7 @@ export default function Home() {
   return (
     <div className="min-h-screen">
       {/* Hero Section */}
-      <section className="relative overflow-hidden pt-16 pb-12 md:pt-20 md:pb-16">
+      <section className="relative overflow-hidden pt-24 pb-12 md:pt-28 md:pb-16">
         {/* Background blobs - optional micro-motion */}
         <div className="absolute inset-0 overflow-hidden pointer-events-none">
           <div className="absolute top-20 left-10 w-72 h-72 bg-indigo-200/30 dark:bg-indigo-900/20 rounded-full blur-3xl animate-pulse-slow"></div>

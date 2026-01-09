@@ -24,6 +24,7 @@ export interface Course {
   difficulty: 'beginner' | 'intermediate' | 'advanced'
   category: string
   status: 'published' | 'draft'
+  enrolledCount?: number // Number of users enrolled/purchased this course
   createdBy: {
     _id: string
     name: string

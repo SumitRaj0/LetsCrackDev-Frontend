@@ -156,7 +156,7 @@ export default function Premium() {
                       duration: getTotalDuration(course),
                       isPremium: course.isPremium,
                       tags: [course.category],
-                      enrolledCount: 0, // Backend doesn't have this
+                      enrolledCount: course.enrolledCount || 0,
                       price: course.price,
                     }}
                     type="course"
@@ -192,7 +192,7 @@ export default function Premium() {
                                 service.category === 'portfolio' ? 'Career' : 'Career',
                       features: service.deliverables,
                       isPremium: true,
-                      optedCount: 0, // Backend doesn't have this
+                      optedCount: service.optedCount || 0,
                       price: service.price,
                     }}
                     type="service"

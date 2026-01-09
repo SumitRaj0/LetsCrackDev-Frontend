@@ -94,7 +94,7 @@ export default function Courses() {
                     duration: getTotalDuration(course),
                     isPremium: course.isPremium,
                     tags: [course.category],
-                    enrolledCount: 0, // Backend doesn't have this
+                    enrolledCount: course.enrolledCount || 0,
                     price: course.price,
                   }}
                   type="course"
