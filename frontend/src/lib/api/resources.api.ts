@@ -106,6 +106,21 @@ export async function getResources(params?: GetResourcesParams): Promise<Resourc
 }
 
 /**
+ * Get resource counts by category (Optimized)
+ */
+export async function getResourceCounts(): Promise<{
+  success: boolean
+  data: { counts: Record<string, number> }
+  message: string
+}> {
+  return api.get<{
+    success: boolean
+    data: { counts: Record<string, number> }
+    message: string
+  }>('/v1/resources/counts')
+}
+
+/**
  * Get resource by ID
  */
 export async function getResourceById(id: string): Promise<ResourceResponse> {

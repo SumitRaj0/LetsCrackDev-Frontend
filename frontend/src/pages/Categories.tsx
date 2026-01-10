@@ -12,26 +12,24 @@ export default function Categories() {
   const [categoriesWithCounts, setCategoriesWithCounts] = useState<Category[]>(categories)
   const [loading, setLoading] = useState(true)
 
-  // Fetch resource counts for each category
+  // Fetch resource counts for each category (optimized - single API call)
   useEffect(() => {
     const fetchResourceCounts = async () => {
       try {
         setLoading(true)
-        const counts = await Promise.all(
-          categories.map(async (category) => {
-            try {
-              const response = await getResources({ category: category.slug, limit: 1 })
-              return {
-                ...category,
-                resourceCount: response.data.pagination.total,
-              }
-            } catch (error) {
-              // If API fails, keep the original count
-              return category
+        const { getResourceCounts } = await import('@/lib/api/resources.api')
+        const response = await getResourceCounts()
+        
+        if (response.success && response.data.counts) {
+          const counts = categories.map((category) => {
+            const count = response.data.counts[category.slug.toLowerCase()] || 0
+            return {
+              ...category,
+              resourceCount: count,
             }
           })
-        )
-        setCategoriesWithCounts(counts)
+          setCategoriesWithCounts(counts)
+        }
       } catch (error) {
         // If all fails, keep original categories
         console.error('Failed to fetch resource counts:', error)
