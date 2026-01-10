@@ -3,20 +3,25 @@ import { useState, useEffect } from 'react'
 import { SearchBar } from '@/components/shared/SearchBar'
 import { CategoryCard } from '@/modules/categories/components/CategoryCard'
 import { categories } from '@/modules/categories/data/categories'
-import { popularResources } from '@/modules/resources/data/popularResources'
 import { ResourceCard } from '@/modules/resources/components/ResourceCard'
 import { ReviewCard } from '@/components/shared/ReviewCard'
 import { reviews } from '@/data/reviews'
 import { ArrowRightIcon } from '@/components/ui/icons/ArrowRightIcon'
 import { FadeInOnScroll } from '@/components/shared/FadeInOnScroll'
 import { getResources } from '@/lib/api/resources.api'
+import { mapBackendResourceToFrontend } from '@/lib/api/resourceMapper'
 import { Category } from '@/modules/categories/types'
+import { Resource } from '@/modules/resources/types'
+import { useErrorHandler } from '@/contexts/ErrorContext'
 
 const POPULAR_SEARCHES = ['React', 'Tailwind', 'System Design', 'Next.js'] as const
 
 export default function Home() {
   const navigate = useNavigate()
+  const { handleError } = useErrorHandler()
   const [categoriesWithCounts, setCategoriesWithCounts] = useState<Category[]>(categories)
+  const [popularResources, setPopularResources] = useState<Resource[]>([])
+  const [isLoadingResources, setIsLoadingResources] = useState(true)
 
   // Fetch resource counts for each category
   useEffect(() => {
@@ -45,6 +50,34 @@ export default function Home() {
 
     fetchResourceCounts()
   }, [])
+
+  // Fetch popular resources from API (top 6 by default)
+  useEffect(() => {
+    const fetchPopularResources = async () => {
+      try {
+        setIsLoadingResources(true)
+        const response = await getResources({ limit: 6 })
+        
+        if (response.success && response.data.resources) {
+          // Map backend resources to frontend format
+          const mappedResources = response.data.resources.map(mapBackendResourceToFrontend)
+          setPopularResources(mappedResources)
+        }
+      } catch (error) {
+        // If API fails, show empty state (don't use dummy data)
+        handleError(error, {
+          showToast: false, // Don't show toast for background fetch
+          logError: true,
+          context: { component: 'Home', action: 'fetchPopularResources' },
+        })
+        setPopularResources([])
+      } finally {
+        setIsLoadingResources(false)
+      }
+    }
+
+    fetchPopularResources()
+  }, [handleError])
 
   const handleSearch = (query: string) => {
     if (query.trim()) {
@@ -172,13 +205,30 @@ export default function Home() {
             </div>
           </FadeInOnScroll>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {popularResources.slice(0, 6).map((resource, index) => (
-              <FadeInOnScroll key={resource.id} delay={index * 50}>
-                <ResourceCard resource={resource} />
-              </FadeInOnScroll>
-            ))}
-          </div>
+          {isLoadingResources ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {[...Array(6)].map((_, index) => (
+                <div
+                  key={index}
+                  className="h-64 bg-gray-200 dark:bg-gray-700 rounded-lg animate-pulse"
+                />
+              ))}
+            </div>
+          ) : popularResources.length > 0 ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {popularResources.map((resource, index) => (
+                <FadeInOnScroll key={resource.id} delay={index * 50}>
+                  <ResourceCard resource={resource} />
+                </FadeInOnScroll>
+              ))}
+            </div>
+          ) : (
+            <div className="text-center py-12">
+              <p className="text-gray-600 dark:text-gray-400">
+                No resources available at the moment. Check back soon!
+              </p>
+            </div>
+          )}
 
           <div className="mt-10 text-center md:hidden">
             <Link
