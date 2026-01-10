@@ -1,11 +1,11 @@
 import { useState, useEffect } from 'react'
 import { CategoryCard } from '@/modules/categories/components/CategoryCard'
+import { CategoryCardSkeleton } from '@/modules/categories/components/CategoryCardSkeleton'
 import { categories } from '@/modules/categories/data/categories'
 import { EmptyState } from '@/components/shared/EmptyState'
 import { SearchBar } from '@/components/shared/SearchBar'
 import { getResources } from '@/lib/api/resources.api'
 import { Category } from '@/modules/categories/types'
-import { LoadingSpinner } from '@/components/ui/LoadingSpinner'
 
 export default function Categories() {
   const [searchQuery, setSearchQuery] = useState('')
@@ -101,8 +101,10 @@ export default function Categories() {
       {/* Categories Grid */}
       <div className="max-w-6xl mx-auto px-4 py-16 md:py-24">
         {loading ? (
-          <div className="flex justify-center items-center py-20">
-            <LoadingSpinner showText />
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {[...Array(9)].map((_, index) => (
+              <CategoryCardSkeleton key={index} />
+            ))}
           </div>
         ) : filteredCategories.length > 0 ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">

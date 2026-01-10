@@ -1,6 +1,7 @@
 import { useState, useMemo, useEffect, useRef, useCallback } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { ResourceCard } from '@/modules/resources/components/ResourceCard'
+import { ResourceCardSkeleton } from '@/modules/resources/components/ResourceCardSkeleton'
 import { categories } from '@/modules/categories/data/categories'
 import { EmptyState } from '@/components/shared/EmptyState'
 import { SearchBar } from '@/components/shared/SearchBar'
@@ -8,7 +9,6 @@ import { Button } from '@/components/ui/button'
 import { getResources } from '@/lib/api'
 import { mapBackendResourceToFrontend } from '@/lib/api/resourceMapper'
 import { Resource } from '@/modules/resources/types'
-import { LoadingSpinner } from '@/components/ui/LoadingSpinner'
 import { useErrorHandler } from '@/contexts/ErrorContext'
 
 type SortOption = 'newest' | 'rating' | 'popular'
@@ -535,8 +535,10 @@ export default function Resources() {
       {/* Resources Grid */}
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-16 md:py-24">
         {isLoading ? (
-          <div className="flex items-center justify-center py-20">
-            <LoadingSpinner size="lg" />
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6">
+            {[...Array(12)].map((_, index) => (
+              <ResourceCardSkeleton key={index} />
+            ))}
           </div>
         ) : filteredResources.length > 0 ? (
           <>
