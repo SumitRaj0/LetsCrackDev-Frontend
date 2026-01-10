@@ -20,6 +20,7 @@ export default function ResourceDetail() {
   const [isLoading, setIsLoading] = useState(true)
   const [isBookmarked, setIsBookmarked] = useState(false)
   const [isTogglingBookmark, setIsTogglingBookmark] = useState(false)
+  const [error, setError] = useState<string | null>(null)
   const abortControllerRef = useRef<AbortController | null>(null)
 
   // Fetch resource from API with request cancellation
@@ -38,6 +39,7 @@ export default function ResourceDetail() {
 
       try {
         setIsLoading(true)
+        setError(null) // Clear any previous errors
         const response = await getResourceById(id)
         
         // Check if request was aborted
@@ -55,19 +57,21 @@ export default function ResourceDetail() {
               mappedResource,
               link: response.data.resource.link
             })
-            throw new Error('Resource URL is missing')
+            setError('Resource URL is missing. Please contact support.')
+            return
           }
           
           // Ensure URL is properly formatted
           const url = mappedResource.url.trim()
           if (!url.startsWith('http://') && !url.startsWith('https://')) {
             console.error('Resource URL is not a valid HTTP/HTTPS URL:', url)
-            throw new Error('Resource URL is invalid')
+            setError('Resource URL is invalid. Please contact support.')
+            return
           }
           
           setResource(mappedResource)
         } else {
-          throw new Error('Resource not found')
+          setError('Resource not found')
         }
       } catch (error: any) {
         // Ignore abort errors
@@ -75,8 +79,23 @@ export default function ResourceDetail() {
           return
         }
         
+        // Extract user-friendly error message
+        let errorMessage = 'Failed to load resource'
+        if (error?.response?.status === 404 || error?.message?.includes('not found')) {
+          errorMessage = 'Resource not found. It may have been removed or the link is incorrect.'
+        } else if (error?.response?.status === 400 || error?.message?.includes('Invalid')) {
+          errorMessage = 'Invalid resource ID. Please check the link and try again.'
+        } else if (error?.response?.status === 500) {
+          errorMessage = 'Server error. Please try again later.'
+        } else if (error?.message) {
+          errorMessage = error.message
+        }
+        
+        setError(errorMessage)
+        
+        // Still log the error for debugging
         handleError(error, {
-          showToast: true,
+          showToast: false, // Don't show toast, we'll show error in UI
           logError: true,
           context: { component: 'ResourceDetail', action: 'fetchResource' },
         })
@@ -90,9 +109,16 @@ export default function ResourceDetail() {
 
     fetchResource()
 
+    // Listen for refetch event
+    const handleRefetch = () => {
+      fetchResource()
+    }
+    window.addEventListener('refetch', handleRefetch)
+
     // Cleanup function
     return () => {
       abortController.abort()
+      window.removeEventListener('refetch', handleRefetch)
     }
   }, [id, handleError])
 
@@ -147,18 +173,84 @@ export default function ResourceDetail() {
     )
   }
 
+  // Show error state
+  if (error) {
+    return (
+      <div className="min-h-screen flex items-center justify-center px-4">
+        <Card className="max-w-md w-full p-8 text-center">
+          <div className="mb-4">
+            <svg
+              className="w-16 h-16 mx-auto text-red-500"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
+              />
+            </svg>
+          </div>
+          <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
+            Oops! Something went wrong
+          </h2>
+          <p className="text-gray-600 dark:text-gray-400 mb-6">{error}</p>
+          <div className="flex flex-col sm:flex-row gap-3 justify-center">
+            <Button
+              variant="primary"
+              onClick={() => {
+                setError(null)
+                setIsLoading(true)
+                // Trigger refetch by re-running effect
+                const event = new Event('refetch')
+                window.dispatchEvent(event)
+              }}
+            >
+              Try Again
+            </Button>
+            <Button
+              variant="ghost"
+              onClick={() => navigate('/resources')}
+            >
+              Back to Resources
+            </Button>
+          </div>
+        </Card>
+      </div>
+    )
+  }
+
   if (!resource) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center">
-          <h1 className="text-2xl font-bold text-black dark:text-white mb-4">Resource Not Found</h1>
-          <button
-            onClick={() => navigate('/resources')}
-            className="text-black dark:text-white hover:underline"
-          >
+      <div className="min-h-screen flex items-center justify-center px-4">
+        <Card className="max-w-md w-full p-8 text-center">
+          <div className="mb-4">
+            <svg
+              className="w-16 h-16 mx-auto text-gray-400"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+              />
+            </svg>
+          </div>
+          <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
+            Resource Not Found
+          </h2>
+          <p className="text-gray-600 dark:text-gray-400 mb-6">
+            The resource you're looking for doesn't exist or has been removed.
+          </p>
+          <Button variant="primary" onClick={() => navigate('/resources')}>
             Back to Resources
-          </button>
-        </div>
+          </Button>
+        </Card>
       </div>
     )
   }
