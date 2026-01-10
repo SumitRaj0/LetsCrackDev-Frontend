@@ -3,10 +3,10 @@ import { useNavigate } from 'react-router-dom'
 import { PageHero } from '@/components/shared/PageHero'
 import { Button } from '@/components/ui/button'
 import { PremiumCard } from '@/components/premium/PremiumCard'
+import { PremiumCardSkeleton } from '@/components/premium/PremiumCardSkeleton'
 import { getServices, getCourses } from '@/lib/api'
 import { Service } from '@/lib/api/services.api'
 import { Course } from '@/lib/api/courses.api'
-import { LoadingSpinner } from '@/components/ui/LoadingSpinner'
 import { useErrorHandler } from '@/contexts/ErrorContext'
 import { ReviewCard } from '@/components/shared/ReviewCard'
 import { reviews } from '@/data/reviews'
@@ -140,11 +140,13 @@ export default function Premium() {
         {activeTab === 'courses' && (
           <>
             {isLoading ? (
-              <div className="flex items-center justify-center py-20">
-                <LoadingSpinner size="lg" />
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {[...Array(6)].map((_, index) => (
+                  <PremiumCardSkeleton key={index} />
+                ))}
               </div>
             ) : courses.length > 0 ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {courses.map(course => (
                   <PremiumCard
                     key={course._id}
@@ -161,8 +163,8 @@ export default function Premium() {
                     }}
                     type="course"
                   />
-            ))}
-          </div>
+                ))}
+              </div>
             ) : (
               <div className="text-center py-20">
                 <p className="text-gray-600 dark:text-gray-400">No premium courses available at the moment.</p>
@@ -174,11 +176,13 @@ export default function Premium() {
         {activeTab === 'services' && (
           <>
             {isLoading ? (
-              <div className="flex items-center justify-center py-20">
-                <LoadingSpinner size="lg" />
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {[...Array(6)].map((_, index) => (
+                  <PremiumCardSkeleton key={index} />
+                ))}
               </div>
             ) : services.length > 0 ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {services.map(service => (
                   <PremiumCard
                     key={service._id}
@@ -197,8 +201,8 @@ export default function Premium() {
                     }}
                     type="service"
                   />
-            ))}
-          </div>
+                ))}
+              </div>
             ) : (
               <div className="text-center py-20">
                 <p className="text-gray-600 dark:text-gray-400">No services available at the moment.</p>

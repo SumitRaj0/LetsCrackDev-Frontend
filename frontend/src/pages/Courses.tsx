@@ -3,9 +3,9 @@ import { useNavigate } from 'react-router-dom'
 import { PageHero } from '@/components/shared/PageHero'
 import { Button } from '@/components/ui/button'
 import { PremiumCard } from '@/components/premium/PremiumCard'
+import { PremiumCardSkeleton } from '@/components/premium/PremiumCardSkeleton'
 import { getCourses } from '@/lib/api'
 import { Course } from '@/lib/api/courses.api'
-import { LoadingSpinner } from '@/components/ui/LoadingSpinner'
 import { EmptyState } from '@/components/shared/EmptyState'
 import { useErrorHandler } from '@/contexts/ErrorContext'
 
@@ -77,8 +77,10 @@ export default function Courses() {
       {/* Courses Grid */}
       <div className="max-w-6xl mx-auto px-4 py-8">
         {isLoading ? (
-          <div className="flex items-center justify-center py-20">
-            <LoadingSpinner size="lg" />
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {[...Array(12)].map((_, index) => (
+              <PremiumCardSkeleton key={index} />
+            ))}
           </div>
         ) : courses.length > 0 ? (
           <>
