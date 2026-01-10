@@ -4,6 +4,7 @@ import { SearchBar } from '@/components/shared/SearchBar'
 import { CategoryCard } from '@/modules/categories/components/CategoryCard'
 import { categories } from '@/modules/categories/data/categories'
 import { ResourceCard } from '@/modules/resources/components/ResourceCard'
+import { ResourceCardSkeleton } from '@/modules/resources/components/ResourceCardSkeleton'
 import { ReviewCard } from '@/components/shared/ReviewCard'
 import { reviews } from '@/data/reviews'
 import { ArrowRightIcon } from '@/components/ui/icons/ArrowRightIcon'
@@ -208,10 +209,9 @@ export default function Home() {
           {isLoadingResources ? (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {[...Array(6)].map((_, index) => (
-                <div
-                  key={index}
-                  className="h-64 bg-gray-200 dark:bg-gray-700 rounded-lg animate-pulse"
-                />
+                <FadeInOnScroll key={index} delay={index * 50}>
+                  <ResourceCardSkeleton />
+                </FadeInOnScroll>
               ))}
             </div>
           ) : popularResources.length > 0 ? (
